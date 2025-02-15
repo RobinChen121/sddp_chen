@@ -1,8 +1,8 @@
-from msp.module1 import add_numbers
-import msp
+from src.msppy.module1 import add_numbers
+import src
 
 def test_file():
     assert add_numbers(23, 45) == 68
-    print(msp.__doc__)
+    print(src.__doc__)
     import sys
     print(sys.path)
