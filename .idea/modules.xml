@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../Python-Practices/.idea/Python-Practices.iml" filepath="$PROJECT_DIR$/../Python-Practices/.idea/Python-Practices.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/sddp_overdraft.iml" filepath="$PROJECT_DIR$/.idea/sddp_overdraft.iml" />
     </modules>
   </component>

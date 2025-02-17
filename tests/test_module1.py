@@ -1,4 +1,4 @@
-from src.msppy.module1 import add_numbers
+from src import add_numbers
 import src
 
 def test_file():
