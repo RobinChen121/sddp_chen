@@ -6,12 +6,29 @@ created on 2025/2/14, 23:17
 @description: Generate samples, scenarios, etc.
 
 """
-import pdb
-
 import scipy.stats as st
 import numpy as np
-
 from numpy.typing import ArrayLike
+
+
+def generate_scenario_paths(scenario_num: int, sample_nums: list[int]) -> ArrayLike:
+    """
+
+    Args:
+        scenario_num: The number of scenarios to be generated.
+        sample_nums: Given sample numbers at each stage
+
+    Returns:
+        An numpy array of scenario paths.
+    """
+    T = len(sample_nums)
+    scenario_paths = [[0 for _ in range(T)] for _ in range(scenario_num)]
+    for i in range(scenario_num):
+        # np.random.seed(10000)
+        for t in range(T):
+            rand_index = np.random.randint(0, sample_nums[t])
+            scenario_paths[i][t] = rand_index
+    return scenario_paths
 
 
 class Sampling:
@@ -68,37 +85,36 @@ class Sampling:
             Use Latin Hyper Sampling.
         Args:
             sample_num: The number of samples to be generated.
-                        The number of samples at each stage are same.
 
         Returns:
-            The samples details in a 1-D Numpy array.
+            The samples details in a 1-D list.
         """
-        samples = np.empty(sample_num)
+        samples = [0.0 for _ in range(sample_num)]
         for i in range(sample_num):
             # np.random.seed(10000)
             rand_p = np.random.uniform(i / sample_num, (i + 1) / sample_num)
             samples[i] = self.dist.ppf(rand_p)
         return samples
 
-    @staticmethod
-    def generate_scenario_paths(scenario_num: int, sample_nums: list[int]) -> ArrayLike:
+    def generate_samples_multi_stage(self, sample_nums: list) -> ArrayLike:
         """
-
+            Generate samples for one random variable at one stage.
+            Distribution at each stage are same.
+            Use Latin Hyper Sampling.
         Args:
-            scenario_num: The number of scenarios to be generated.
-            sample_nums: Given sample numbers at each stage
+            sample_nums: The number of samples to be generated at each stage.
 
         Returns:
-            An numpy array of scenario paths.
+            The samples details in a 1-D Numpy array.
         """
         T = len(sample_nums)
-        scenario_paths = np.empty((scenario_num, T))
-        for i in range(scenario_num):
-            # np.random.seed(10000)
-            for t in range(T):
-                rand_index = np.random.randint(0, sample_nums[t])
-                scenario_paths[i][t] = rand_index
-        return scenario_paths
+        samples = [[0.0 for _ in sample_nums[t]] for t in range(T)]
+        for t in range(T):
+            for i in range(sample_nums[t]):
+                # np.random.seed(10000)
+                rand_p = np.random.uniform(i / sample_nums[t], (i + 1) / sample_nums[t])
+                samples[t][i] = self.dist.ppf(rand_p)
+        return samples
 
 
 if __name__ == '__main__':

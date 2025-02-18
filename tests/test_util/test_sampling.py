@@ -6,7 +6,7 @@ created on 2025/2/15, 08:17
 @description: Test the modules in the utils/ directory.
 
 """
-from utils.sampling import Sampling
+from utils.sampling import Sampling, generate_scenario_paths
 import pytest
 import numpy as np
 
@@ -49,7 +49,7 @@ def test_generate_sample():
 @pytest.mark.skip(reason='tested')
 def test_generate_sample_path():
     sample_nums = [5, 10, 5]
-    paths = Sampling.generate_scenario_paths(5, sample_nums)
+    paths = generate_scenario_paths(5, sample_nums)
     assert isinstance(paths, np.ndarray)
     print('\n')
     print(paths)
