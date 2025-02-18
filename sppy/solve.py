@@ -8,7 +8,7 @@ Description:
 """
 
 
-def problem_specific(problem_name: str):
+def problem_specific(problem_name: str = 'newsvendor.py'):
     pass
 
 

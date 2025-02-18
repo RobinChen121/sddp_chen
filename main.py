@@ -18,7 +18,7 @@ class SolveMethod(Enum):
 # either solve a specific problem or solve general problems
 solve_method = SolveMethod.PROBLEM_SPECIFIC
 if solve_method == SolveMethod.PROBLEM_SPECIFIC:
-    problem_name = ''
+    problem_name = 'newsvendor.py'
     sp.problem_specific(problem_name)
 else:
     sp.general()
