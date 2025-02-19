@@ -46,7 +46,6 @@ q_sub_values = [[[0.0 for n in range(N)] for t in range(T - 1)] for _ in range(i
 
 start = time.process_time()
 while iter_ < iter_num:
-
     # sample a numer of scenarios from the full scenario tree
     scenario_paths = generate_scenario_paths(N, sample_nums)
     scenario_paths.sort()  # sort to mase same numbers together
