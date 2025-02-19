@@ -31,6 +31,19 @@ def generate_scenario_paths(scenario_num: int, sample_nums: list[int]) -> ArrayL
     return scenario_paths
 
 
+def generate_scenarios_detail(scenario_num: int, sample_num: int, sample_details) -> ArrayLike:
+    T = len(sample_details)
+    scenarios = [[0 for t in range(T)] for i in range(scenario_num)]
+    for i in range(scenario_num):
+        # np.random.seed(10000)
+        for t in range(T):
+            rand_index = np.random.randint(0, sample_num)
+            scenarios[i][t] = sample_details[t][rand_index]
+        # random.shuffle(samples[i])
+
+    return scenarios
+
+
 class Sampling:
     """
     This class is for generating samples and scenarios

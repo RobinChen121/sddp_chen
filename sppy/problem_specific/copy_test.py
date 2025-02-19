@@ -1,32 +1,87 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Python version: 3.12.7
-Author: Zhen Chen, chen.zhen5526@gmail.com
-Date: 2025/2/17 13:39
-Description:
-    SDDP codes to solve the classic multi-stage newsvendor problem
-    in which the parameters are: unit_vari_cost, unit_back_cost, unit_hold_cost.
+Created on Mon Jul 17 08:44:23 2023
+
+@author: zhenchen
+
+@disp:
+
 
 """
 
-import time
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 10 10:52:47 2023
+
+@author: zhenchen
+
+@disp:  
+    large planning horizon requires larger N and longer iterations;
+    longer iterations seems more important than longer N;
+    
+    generate sampled scenarios in each forward pass;
+-----
+ini_I = 0
+vari_cost = 1
+unit_back_cost = 10
+unit_hold_cost = 2
+mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
+----
+218.41 for sdp optimal cost, java 0.5s;
+
+199.84 for sddp, 1345.88s on a desktop for iter number 15, sample number 50;
+198.09 for sddp, 884.52s on a desktop for iter number 15, sample number 30;
+209.04 for sddp, 638.28s on a desktop for iter number 18, sample number 20;    
+220.98 for sddp, 806s on a desktop for iter number 21, sample number 20;
+
+219.61 for sddp and only 1 cut in backward and forward, 447s(207s on mac) on a desktop for iter number 21, sample number 20;
+
+After setting OutputFlag = 0:
+221.48 for sddp, 162.942s on a mac for iter number 30, sample number 20;   
+
+"""
 from gurobipy import Model, GRB
-from sppy.utils.sampling import Sampling, generate_scenario_paths
-from sppy.utils.logger import Logger
+import time
+import itertools
+import random
 
+import sys
+
+# sys.path.append("..")
+# from tree import generate_samples, generate_scenarios2
+sys.path.append("/Users/zhenchen/Documents/sddp_chen")
+from sppy.utils.sampling import Sampling, generate_scenario_paths
+
+
+ini_I = 0
 mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
 T = len(mean_demands)
-ini_I = 0
-unit_vari_costs = [1 for _ in range(T)]
-unit_back_costs = [10 for _ in range(T)]
-unit_hold_costs = [2 for _ in range(T)]
-
+vari_cost = [1 for _ in range(T)]
+unit_back_cost = [10 for _ in range(T)]
+unit_hold_cost = [2 for _ in range(T)]
 sample_num = 10
 sample_nums = [sample_num for t in range(T)]
+
+trunQuantile = 0.9999  # affective to the final ordering quantity
+scenario_numTotal = 1
+for i in sample_nums:
+    scenario_numTotal *= i
+
 # detailed samples in each period
+# sample_details = [[0 for i in range(sample_nums[t])] for t in range(T)]
+# for t in range(T):
+#     sample_details[t] = generate_samples(sample_nums[t], trunQuantile, mean_demands[t])
 sample_details = [[0.0 for _ in range(sample_nums[t])] for t in range(T)]
 for t in range(T):
     sampling = Sampling(dist_name="poisson", mu=mean_demands[t])
     sample_details[t] = sampling.generate_samples(sample_nums[t])
+
+# sample_detail = [[5, 15], [5, 15]]
+# scenarios_full = list(itertools.product(*sample_detail))
+
 
 iter_ = 0
 iter_num = 10
@@ -36,34 +91,39 @@ m = Model()  # linear model in the first stage
 # decision variable in the first stage model
 q = m.addVar(vtype=GRB.CONTINUOUS, name="q_1")
 theta = m.addVar(lb=theta_iniValue * T, vtype=GRB.CONTINUOUS, name="theta_2")
-m.setObjective(unit_vari_costs[0] * q + theta, GRB.MINIMIZE)
+m.setObjective(vari_cost[0] * q + theta, GRB.MINIMIZE)
 
-slope_1st_stage = []
-intercept_1st_stage = []
+# cuts
+slope1_stage = []
+intercept1_stage = []
 slopes = [[[] for n in range(N)] for t in range(T - 1)]
 intercepts = [[[] for n in range(N)] for t in range(T - 1)]
-q_values = [0.0 for _ in range(iter_num)]
+q_values = [0 for _ in range(iter_num)]
 q_sub_values = [
     [[0.0 for n in range(N)] for t in range(T - 1)] for _ in range(iter_num)
 ]
 
-z = 0
-# logger_console = Logger()
-# logger_console.header_sddp()
 start = time.process_time()
 while iter_ < iter_num:
+
     # sample a numer of scenarios from the full scenario tree
+    # random.seed(10000)
+    # sample_scenarios = generate_scenarios2(N, sample_num, sample_detail)
+    # # sample_scenarios= random.sample(scenarios_full, N) # sampling without replacement
+    # sample_scenarios.sort()  # sort to mase same numbers together
+    # # sample_scenarios = [[5, 5], [5, 15], [15, 5], [15, 15]]
+
     scenario_paths = generate_scenario_paths(N, sample_nums)
     scenario_paths.sort()  # sort to mase same numbers together
 
     # forward
     if iter_ > 0:
-        m.addConstr(theta >= slope_1st_stage[-1] * q + intercept_1st_stage[-1])
+        m.addConstr(theta >= slope1_stage[-1] * q + intercept1_stage[-1])
     m.update()
     m.Params.OutputFlag = 0
     m.optimize()
-    # m.write('iter' + str(iter) + '_main1.lp')
-    # m.write('iter' + str(iter) + '_main1.sol')
+    # m.write("iter" + str(iter_) + "_main1.lp")
+    # m.write("iter" + str(iter_) + "_main1.sol")
 
     q_values[iter_] = q.x
     theta_value = theta.x
@@ -73,7 +133,7 @@ while iter_ < iter_num:
     q_forward = [
         [
             m_forward[t][n].addVar(
-                vtype=GRB.CONTINUOUS, name="q_" + str(t + 2) + "^" + str(n)
+                vtype=GRB.CONTINUOUS, name="q_" + str(t + 2) + "^" + str(n + 1)
             )
             for n in range(N)
         ]
@@ -82,7 +142,7 @@ while iter_ < iter_num:
     I_forward = [
         [
             m_forward[t][n].addVar(
-                vtype=GRB.CONTINUOUS, name="I_" + str(t + 1) + "^" + str(n)
+                vtype=GRB.CONTINUOUS, name="I_" + str(t + 1) + "^" + str(n + 1)
             )
             for n in range(N)
         ]
@@ -92,7 +152,7 @@ while iter_ < iter_num:
     B_forward = [
         [
             m_forward[t][n].addVar(
-                vtype=GRB.CONTINUOUS, name="B_" + str(t + 1) + "^" + str(n)
+                vtype=GRB.CONTINUOUS, name="B_" + str(t + 1) + "^" + str(n + 1)
             )
             for n in range(N)
         ]
@@ -103,7 +163,7 @@ while iter_ < iter_num:
             m_forward[t][n].addVar(
                 lb=-theta_iniValue * (T - 1 - t),
                 vtype=GRB.CONTINUOUS,
-                name="theta_" + str(t + 3) + "^" + str(n),
+                name="theta_" + str(t + 3) + "^" + str(n + 1),
             )
             for n in range(N)
         ]
@@ -118,14 +178,15 @@ while iter_ < iter_num:
     # forward loop
     for t in range(T):
         for n in range(N):
+            # demand = sample_scenarios[n][t]
+
             index = scenario_paths[n][t]
             demand = sample_details[t][index]
 
+            # put those cuts in the front
             if iter_ > 0 and t < T - 1:
                 for i in range(iter_):
-                    for nn in range(N):  #
-                        if abs(slopes[t][nn][i]) < 1e-3:
-                            break
+                    for nn in range(N):  # N
                         m_forward[t][n].addConstr(
                             theta_forward[t][n]
                             >= slopes[t][nn][i]
@@ -135,22 +196,20 @@ while iter_ < iter_num:
 
             if t == T - 1:
                 m_forward[t][n].setObjective(
-                    unit_hold_costs[t] * I_forward[t][n]
-                    + unit_back_costs[t] * B_forward[t][n],
+                    unit_hold_cost[t]  * I_forward[t][n] + unit_back_cost[t]  * B_forward[t][n],
                     GRB.MINIMIZE,
                 )
             else:
                 m_forward[t][n].setObjective(
-                    unit_vari_costs[t] * q_forward[t][n]
-                    + unit_hold_costs[t] * I_forward[t][n]
-                    + unit_back_costs[t] * B_forward[t][n]
+                    vari_cost[t]  * q_forward[t][n]
+                    + unit_hold_cost[t] * I_forward[t][n]
+                    + unit_back_cost[t]  * B_forward[t][n]
                     + theta_forward[t][n],
                     GRB.MINIMIZE,
                 )
             if t == 0:
                 m_forward[t][n].addConstr(
-                    I_forward[t][n] - B_forward[t][n]
-                    == ini_I + q_values[iter_] - demand
+                    I_forward[t][n] - B_forward[t][n] == ini_I + q_values[iter_] - demand
                 )
             else:
                 m_forward[t][n].addConstr(
@@ -164,7 +223,7 @@ while iter_ < iter_num:
             # optimize
             m_forward[t][n].Params.OutputFlag = 0
             m_forward[t][n].optimize()
-            # m_forward[t][n].write('iter' + str(iter) + '_sub_' + str(t+1) + '^' + str(n+1) + '-2.lp')
+            # m_forward[t][n].write('iter_' + str(iter) + '_sub_' + str(t+1) + '^' + str(n+1) + '-2.lp')
 
             I_forward_values[t][n] = I_forward[t][n].x
             B_forward_values[t][n] = B_forward[t][n].x
@@ -182,7 +241,7 @@ while iter_ < iter_num:
         [
             [
                 m_backward[t][n][s].addVar(
-                    vtype=GRB.CONTINUOUS, name="q_" + str(t + 2) + "^" + str(n)
+                    vtype=GRB.CONTINUOUS, name="q_" + str(t + 2) + "^" + str(n + 1)
                 )
                 for s in range(sample_nums[t])
             ]
@@ -194,7 +253,7 @@ while iter_ < iter_num:
         [
             [
                 m_backward[t][n][s].addVar(
-                    vtype=GRB.CONTINUOUS, name="I_" + str(t + 1) + "^" + str(n)
+                    vtype=GRB.CONTINUOUS, name="I_" + str(t + 1) + "^" + str(n + 1)
                 )
                 for s in range(sample_nums[t])
             ]
@@ -207,7 +266,7 @@ while iter_ < iter_num:
         [
             [
                 m_backward[t][n][s].addVar(
-                    vtype=GRB.CONTINUOUS, name="B_" + str(t + 1) + "^" + str(n)
+                    vtype=GRB.CONTINUOUS, name="B_" + str(t + 1) + "^" + str(n + 1)
                 )
                 for s in range(sample_nums[t])
             ]
@@ -221,7 +280,7 @@ while iter_ < iter_num:
                 m_backward[t][n][s].addVar(
                     lb=-theta_iniValue * (T - 1 - t),
                     vtype=GRB.CONTINUOUS,
-                    name="theta_" + str(t + 3) + "^" + str(n),
+                    name="theta_" + str(t + 3) + "^" + str(n + 1),
                 )
                 for s in range(sample_nums[t])
             ]
@@ -244,15 +303,15 @@ while iter_ < iter_num:
     # backward loop
     for t in range(T - 1, -1, -1):
         for n in range(N):
-            S = sample_nums[t]
+            S = len(sample_details[t])
             for s in range(S):
                 demand = sample_details[t][s]
-
+                if t == 0 and n != 0:
+                    continue
+                # put those cuts in the front
                 if iter_ > 0 and t < T - 1:
                     for i in range(iter_):
                         for nn in range(N):  # N
-                            if abs(slopes[t][nn][i]) < 1e-3:
-                                break
                             m_backward[t][n][s].addConstr(
                                 theta_backward[t][n][s]
                                 >= slopes[t][nn][i]
@@ -266,15 +325,15 @@ while iter_ < iter_num:
 
                 if t == T - 1:
                     m_backward[t][n][s].setObjective(
-                        unit_hold_costs[t] * I_backward[t][n][s]
-                        + unit_back_costs[t] * B_backward[t][n][s],
+                        unit_hold_cost[t]  * I_backward[t][n][s]
+                        + unit_back_cost[t]  * B_backward[t][n][s],
                         GRB.MINIMIZE,
                     )
                 else:
                     m_backward[t][n][s].setObjective(
-                        unit_vari_costs[t] * q_backward[t][n][s]
-                        + unit_hold_costs[t] * I_backward[t][n][s]
-                        + unit_back_costs[t] * B_backward[t][n][s]
+                        vari_cost[t]  * q_backward[t][n][s]
+                        + unit_hold_cost[t]  * I_backward[t][n][s]
+                        + unit_back_cost[t]  * B_backward[t][n][s]
                         + theta_backward[t][n][s],
                         GRB.MINIMIZE,
                     )
@@ -317,12 +376,12 @@ while iter_ < iter_num:
 
             # recording cuts
             if t == 0 and n == 0:
-                slope_1st_stage.append(avg_pi)
-                intercept_1st_stage.append(avg_pi_rhs)
+                slope1_stage.append(avg_pi)
+                intercept1_stage.append(avg_pi_rhs)
             elif t > 0:
                 slopes[t - 1][n].append(avg_pi)
                 intercepts[t - 1][n].append(avg_pi_rhs)
-    # logger_console.text_sddp(iter_, z)
+
     iter_ += 1
 
 end = time.process_time()
@@ -331,10 +390,3 @@ print("final expected total costs is %.2f" % z)
 print("ordering Q in the first period is %.2f" % q_values[iter_ - 1])
 cpu_time = end - start
 print("cpu time is %.3f s" % cpu_time)
-
-# import os
-#
-# file_name_without_ext = os.path.splitext(os.path.basename(__file__))[0]
-# file_name = file_name_without_ext + ".log"
-# logger_file = Logger(log_to_file=True, file_name=file_name)
-# logger_file.file_sddp("this is a test")
