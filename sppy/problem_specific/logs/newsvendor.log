@@ -1,3 +1,12 @@
-2025-02-19 21:16:53,948 - this is a test
-2025-02-19 21:19:53,655 - this is a test
-2025-02-19 21:20:22,093 - this is a test
+
+2025-02-19 22:28:19,533 - darwin
+2025-02-19 22:28:19,533 - Parameters:
+            _____________________
+            ini_I:0
+            T:4
+            mean demands: [10, 20, 10, 20]
+            unit_vari_costs: [1, 1, 1, 1]
+            unit_back_costs: [10, 10, 10, 10]
+            unit_hold_costs: [2, 2, 2, 2]
+            
+2025-02-19 22:47:14,781 - system: darwin

@@ -13,24 +13,25 @@ from gurobipy import Model, GRB
 from sppy.utils.sampling import Sampling, generate_scenario_paths
 from sppy.utils.logger import Logger
 
-mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
+mean_demands = [10, 20, 10, 20]
+distribution = "poisson"
 T = len(mean_demands)
 ini_I = 0
 unit_vari_costs = [1 for _ in range(T)]
 unit_back_costs = [10 for _ in range(T)]
 unit_hold_costs = [2 for _ in range(T)]
-
 sample_num = 10
+iter_num = 10
+N = 10  # sampled number of scenarios for forward computing
+
 sample_nums = [sample_num for t in range(T)]
 # detailed samples in each period
 sample_details = [[0.0 for _ in range(sample_nums[t])] for t in range(T)]
 for t in range(T):
-    sampling = Sampling(dist_name="poisson", mu=mean_demands[t])
+    sampling = Sampling(dist_name=distribution, mu=mean_demands[t])
     sample_details[t] = sampling.generate_samples(sample_nums[t])
 
 iter_ = 0
-iter_num = 10
-N = 10  # sampled number of scenarios for forward computing
 theta_iniValue = 0  # initial theta values (profit) in each period
 m = Model()  # linear model in the first stage
 # decision variable in the first stage model
@@ -48,8 +49,8 @@ q_sub_values = [
 ]
 
 z = 0
-# logger_console = Logger()
-# logger_console.header_sddp()
+logger_console = Logger()
+logger_console.console_header_sddp()
 start = time.process_time()
 while iter_ < iter_num:
     # sample a numer of scenarios from the full scenario tree
@@ -322,7 +323,7 @@ while iter_ < iter_num:
             elif t > 0:
                 slopes[t - 1][n].append(avg_pi)
                 intercepts[t - 1][n].append(avg_pi_rhs)
-    # logger_console.text_sddp(iter_, z)
+    logger_console.console_body_sddp(iter_, z)
     iter_ += 1
 
 end = time.process_time()
@@ -332,9 +333,20 @@ print("ordering Q in the first period is %.2f" % q_values[iter_ - 1])
 cpu_time = end - start
 print("cpu time is %.3f s" % cpu_time)
 
-# import os
-#
-# file_name_without_ext = os.path.splitext(os.path.basename(__file__))[0]
-# file_name = file_name_without_ext + ".log"
-# logger_file = Logger(log_to_file=True, file_name=file_name)
-# logger_file.file_sddp("this is a test")
+import os
+import sys
+
+file_name_without_ext = os.path.splitext(os.path.basename(__file__))[0]
+file_name = file_name_without_ext + ".log"
+logger_file = Logger(log_to_file=True, file_name=file_name)
+logger_file.file_header_sddp(f"system: {sys.platform}")
+message1 = f"Parameters:\n\
+            _____________________\n\
+            ini_I:{ini_I}\n\
+            T:{T}\n\
+            mean demands: {mean_demands:}\n\
+            unit_vari_costs: {unit_vari_costs}\n\
+            unit_back_costs: {unit_back_costs}\n\
+            unit_hold_costs: {unit_hold_costs}\n\
+            "
+logger_file.file_body_sddp(message1)

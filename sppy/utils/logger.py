@@ -30,8 +30,8 @@ class Logger:
             file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
             file_handler.setLevel(logging.DEBUG)
             # Define the log formatter in the file log
-            formatter_file = logging.Formatter("%(asctime)s - %(message)s")
-            file_handler.setFormatter(formatter_file)
+            formatter_file_head = logging.Formatter("%(asctime)s - %(message)s")
+            file_handler.setFormatter(formatter_file_head)
             file_logger.addHandler(file_handler)  # Add the handler to loggers
 
         # Set up the handlers
@@ -44,7 +44,7 @@ class Logger:
         self.file_logger = file_logger
         self.console_logger = console_logger
 
-    def header_sddp(self):
+    def console_header_sddp(self):
         num_slots = self.num_slots
         author = "Dr. Zhen Chen"
         self.console_logger.info(f"{author:-^{num_slots}}")
@@ -55,18 +55,24 @@ class Logger:
         self.console_logger.info(f"{str1:<{width1}}{str2:>{width2}}")
         self.console_logger.info("-" * num_slots)
 
-    def text_sddp(self, iteration, objective_value):
+    def console_body_sddp(self, iteration, objective_value):
         width1 = 20
         width2 = self.num_slots - width1
         self.console_logger.info(
             f"{iteration:<{width1}}{objective_value:>{width2}.4f}."
         )
 
-    def file_sddp(self, message):
+    def file_header_sddp(self, message):
         self.file_logger.info(message)
+
+    def file_body_sddp(self, message):
+        formatter_file_body= logging.Formatter("%(message)s")
+        for handler in self.file_logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                handler.setFormatter(formatter_file_body)
 
 
 if __name__ == "__main__":
     logger = Logger()
-    logger.header_sddp()
-    logger.text_sddp(iteration=100, objective_value=100)
+    logger.console_header_sddp()
+    logger.console_body_sddp(iteration=100, objective_value=100)
