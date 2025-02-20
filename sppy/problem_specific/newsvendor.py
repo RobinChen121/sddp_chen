@@ -6,6 +6,15 @@ Description:
     SDDP codes to solve the classic multi-stage newsvendor problem
     in which the parameters are: unit_vari_cost, unit_back_cost, unit_hold_cost.
 
+-----
+ini_I = 0
+vari_cost = 1
+unit_back_cost = 10
+unit_hold_cost = 2
+mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
+----
+218.41 for sdp optimal cost, java 0.5s;
+
 """
 
 import time
@@ -13,7 +22,7 @@ from gurobipy import Model, GRB
 from sppy.utils.sampling import Sampling, generate_scenario_paths
 from sppy.utils.logger import Logger
 
-mean_demands = [10, 20, 10, 20]
+mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
 distribution = "poisson"
 T = len(mean_demands)
 ini_I = 0
@@ -21,10 +30,10 @@ unit_vari_costs = [1 for _ in range(T)]
 unit_back_costs = [10 for _ in range(T)]
 unit_hold_costs = [2 for _ in range(T)]
 sample_num = 10
-iter_num = 10
-N = 10  # sampled number of scenarios for forward computing
-
 sample_nums = [sample_num for t in range(T)]
+iter_num = 30
+scenario_forward_num = 10  # sampled number of scenarios for forward computing
+
 # detailed samples in each period
 sample_details = [[0.0 for _ in range(sample_nums[t])] for t in range(T)]
 for t in range(T):
@@ -41,20 +50,22 @@ m.setObjective(unit_vari_costs[0] * q + theta, GRB.MINIMIZE)
 
 slope_1st_stage = []
 intercept_1st_stage = []
-slopes = [[[] for n in range(N)] for t in range(T - 1)]
-intercepts = [[[] for n in range(N)] for t in range(T - 1)]
+slopes = [[[] for n in range(scenario_forward_num)] for t in range(T - 1)]
+intercepts = [[[] for n in range(scenario_forward_num)] for t in range(T - 1)]
 q_values = [0.0 for _ in range(iter_num)]
 q_sub_values = [
-    [[0.0 for n in range(N)] for t in range(T - 1)] for _ in range(iter_num)
+    [[0.0 for n in range(scenario_forward_num)] for t in range(T - 1)]
+    for _ in range(iter_num)
 ]
 
 z = 0
-logger_console = Logger()
-logger_console.console_header_sddp()
+log_file_name = "newsvendor.log"
+logger = Logger(log_file_name)
+logger.console_header_sddp()
 start = time.process_time()
 while iter_ < iter_num:
     # sample a numer of scenarios from the full scenario tree
-    scenario_paths = generate_scenario_paths(N, sample_nums)
+    scenario_paths = generate_scenario_paths(scenario_forward_num, sample_nums)
     scenario_paths.sort()  # sort to mase same numbers together
 
     # forward
@@ -70,13 +81,13 @@ while iter_ < iter_num:
     theta_value = theta.x
     z = m.objVal
 
-    m_forward = [[Model() for n in range(N)] for t in range(T)]
+    m_forward = [[Model() for n in range(scenario_forward_num)] for t in range(T)]
     q_forward = [
         [
             m_forward[t][n].addVar(
                 vtype=GRB.CONTINUOUS, name="q_" + str(t + 2) + "^" + str(n)
             )
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T - 1)
     ]
@@ -85,7 +96,7 @@ while iter_ < iter_num:
             m_forward[t][n].addVar(
                 vtype=GRB.CONTINUOUS, name="I_" + str(t + 1) + "^" + str(n)
             )
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T)
     ]
@@ -95,7 +106,7 @@ while iter_ < iter_num:
             m_forward[t][n].addVar(
                 vtype=GRB.CONTINUOUS, name="B_" + str(t + 1) + "^" + str(n)
             )
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T)
     ]
@@ -106,25 +117,25 @@ while iter_ < iter_num:
                 vtype=GRB.CONTINUOUS,
                 name="theta_" + str(t + 3) + "^" + str(n),
             )
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T - 1)
     ]
 
-    q_forward_values = [[0 for n in range(N)] for t in range(T - 1)]
-    I_forward_values = [[0 for n in range(N)] for t in range(T)]
-    B_forward_values = [[0 for n in range(N)] for t in range(T)]
-    theta_forward_values = [[0 for n in range(N)] for t in range(T)]
+    q_forward_values = [[0 for n in range(scenario_forward_num)] for t in range(T - 1)]
+    I_forward_values = [[0 for n in range(scenario_forward_num)] for t in range(T)]
+    B_forward_values = [[0 for n in range(scenario_forward_num)] for t in range(T)]
+    theta_forward_values = [[0 for n in range(scenario_forward_num)] for t in range(T)]
 
     # forward loop
     for t in range(T):
-        for n in range(N):
+        for n in range(scenario_forward_num):
             index = scenario_paths[n][t]
             demand = sample_details[t][index]
 
             if iter_ > 0 and t < T - 1:
                 for i in range(iter_):
-                    for nn in range(N):  #
+                    for nn in range(scenario_forward_num):  #
                         if abs(slopes[t][nn][i]) < 1e-3:
                             break
                         m_forward[t][n].addConstr(
@@ -177,7 +188,8 @@ while iter_ < iter_num:
 
     # backward
     m_backward = [
-        [[Model() for s in range(sample_nums[t])] for n in range(N)] for t in range(T)
+        [[Model() for s in range(sample_nums[t])] for n in range(scenario_forward_num)]
+        for t in range(T)
     ]
     q_backward = [
         [
@@ -187,7 +199,7 @@ while iter_ < iter_num:
                 )
                 for s in range(sample_nums[t])
             ]
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T - 1)
     ]
@@ -199,7 +211,7 @@ while iter_ < iter_num:
                 )
                 for s in range(sample_nums[t])
             ]
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T)
     ]
@@ -212,7 +224,7 @@ while iter_ < iter_num:
                 )
                 for s in range(sample_nums[t])
             ]
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T)
     ]
@@ -226,32 +238,35 @@ while iter_ < iter_num:
                 )
                 for s in range(sample_nums[t])
             ]
-            for n in range(N)
+            for n in range(scenario_forward_num)
         ]
         for t in range(T - 1)
     ]
 
     theta_backward_values = [
-        [[0 for s in range(sample_nums[t])] for n in range(N)] for t in range(T)
+        [[0 for s in range(sample_nums[t])] for n in range(scenario_forward_num)]
+        for t in range(T)
     ]
     pi_values = [
-        [[0 for s in range(sample_nums[t])] for n in range(N)] for t in range(T)
+        [[0 for s in range(sample_nums[t])] for n in range(scenario_forward_num)]
+        for t in range(T)
     ]
     pi_rhs_values = [
-        [[0 for s in range(sample_nums[t])] for n in range(N)] for t in range(T)
+        [[0 for s in range(sample_nums[t])] for n in range(scenario_forward_num)]
+        for t in range(T)
     ]
 
     # it is better t in the first loop
     # backward loop
     for t in range(T - 1, -1, -1):
-        for n in range(N):
+        for n in range(scenario_forward_num):
             S = sample_nums[t]
             for s in range(S):
                 demand = sample_details[t][s]
 
                 if iter_ > 0 and t < T - 1:
                     for i in range(iter_):
-                        for nn in range(N):  # N
+                        for nn in range(scenario_forward_num):  # scenario_forward_num
                             if abs(slopes[t][nn][i]) < 1e-3:
                                 break
                             m_backward[t][n][s].addConstr(
@@ -323,30 +338,45 @@ while iter_ < iter_num:
             elif t > 0:
                 slopes[t - 1][n].append(avg_pi)
                 intercepts[t - 1][n].append(avg_pi_rhs)
-    logger_console.console_body_sddp(iter_, z)
+    logger.console_body_sddp(iter_, z)
     iter_ += 1
 
 end = time.process_time()
 print("********************************************")
 print("final expected total costs is %.2f" % z)
-print("ordering Q in the first period is %.2f" % q_values[iter_ - 1])
+Q_0 = q_values[iter_ - 1]
+print("ordering Q in the first period is %.2f" % Q_0)
 cpu_time = end - start
 print("cpu time is %.3f s" % cpu_time)
 
-import os
+# the following codes are for outputting information in the log file
 import sys
 
-file_name_without_ext = os.path.splitext(os.path.basename(__file__))[0]
-file_name = file_name_without_ext + ".log"
-logger_file = Logger(log_to_file=True, file_name=file_name)
-logger_file.file_header_sddp(f"system: {sys.platform}")
-message1 = f"Parameters:\n\
-            _____________________\n\
-            ini_I:{ini_I}\n\
-            T:{T}\n\
-            mean demands: {mean_demands:}\n\
-            unit_vari_costs: {unit_vari_costs}\n\
-            unit_back_costs: {unit_back_costs}\n\
-            unit_hold_costs: {unit_hold_costs}\n\
-            "
-logger_file.file_body_sddp(message1)
+description = "This module build gurobi model for each uncertainty realization."
+logger.file_header_sddp(f"system: {sys.platform}")
+result_txt = ("cpu_time", "objective value", "Q_0")
+results_values = (cpu_time, z, Q_0)
+results = zip(result_txt, results_values)
+sddp_parameters_txt = ("sample numbers", "scenario_forward_num", "iter_num")
+sddp_parameters_values = (sample_nums, scenario_forward_num, iter_num)
+sddp_parameters = zip(sddp_parameters_txt, sddp_parameters_values)
+problem_parameters_txt = (
+    "ini_I",
+    "T",
+    "distribution",
+    "mean_demands",
+    "unit_vari_costs",
+    "unit_back_costs",
+    "unit_hold_costs",
+)
+problem_parameters_values = (
+    ini_I,
+    T,
+    distribution,
+    mean_demands,
+    unit_vari_costs,
+    unit_back_costs,
+    unit_hold_costs,
+)
+problem_parameters = zip(problem_parameters_txt, problem_parameters_values)
+logger.file_body_sddp(description, results, sddp_parameters, problem_parameters)

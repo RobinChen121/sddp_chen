@@ -14,35 +14,33 @@ class Logger:
 
     def __init__(
         self,
-        num_slots: int = 50,
-        log_to_console: bool = True,
-        log_to_file: bool = False,
         file_name: str = "",
+        log_to_console: bool = True,
+        log_to_file: bool = True,
+        num_slots: int = 50,
         directory="logs/",
     ):
         self.num_slots = num_slots
         file_logger = logging.getLogger("file_logger")
         console_logger = logging.getLogger("console_only_logger")
         file_logger.setLevel(logging.DEBUG)  # Record logs of all levels
+        console_logger.setLevel(logging.INFO)
 
         if log_to_file:
             log_file = directory + file_name  # the full directory of the log file
             file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
-            file_handler.setLevel(logging.DEBUG)
             # Define the log formatter in the file log
             formatter_file_head = logging.Formatter("%(asctime)s - %(message)s")
             file_handler.setFormatter(formatter_file_head)
             file_logger.addHandler(file_handler)  # Add the handler to loggers
+            self.file_logger = file_logger
 
         # Set up the handlers
         if log_to_console:
             # Create a separate logger for console-only messages
             console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.INFO)
             console_logger.addHandler(console_handler)  # Only attach console handler
-
-        self.file_logger = file_logger
-        self.console_logger = console_logger
+            self.console_logger = console_logger
 
     def console_header_sddp(self):
         num_slots = self.num_slots
@@ -65,11 +63,31 @@ class Logger:
     def file_header_sddp(self, message):
         self.file_logger.info(message)
 
-    def file_body_sddp(self, message):
-        formatter_file_body= logging.Formatter("%(message)s")
+    def file_body_sddp(self, description, message1, message2, message3):
+        formatter_file_head = logging.Formatter("%(message)s")
         for handler in self.file_logger.handlers:
-            if isinstance(handler, logging.FileHandler):
-                handler.setFormatter(formatter_file_body)
+            if isinstance(handler, logging.StreamHandler):
+                handler.setFormatter(formatter_file_head)
+                self.file_logger.addHandler(handler)
+                self.file_logger.info(f"description: {description}")
+                self.file_logger.info("_" * 20)
+                self.file_logger.info("results:")
+                for key, value in message1:
+                    self.file_logger.info(f"{key}: {value:.2f}")
+                self.file_logger.info("_" * 20)
+                self.file_logger.info("sddp parameters:")
+                for key, value in message2:
+                    self.file_logger.info(f"{key}: {value}")
+                self.file_logger.info("_" * 20)
+                self.file_logger.info("problem parameters:")
+                for key, value in message3:
+                    self.file_logger.info(f"{key}: {value}")
+                self.file_logger.info("\n")
+                break
+
+    @staticmethod
+    def dict_message(message):
+        return {k: v for k, v in locals().items()}
 
 
 if __name__ == "__main__":

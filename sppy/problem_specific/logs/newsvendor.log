@@ -1,12 +1,137 @@
+2025-02-20 10:31:23,796 - system: darwin
+____________________
+results:
+cpu_time: 2.52
+objective value: 106.68
+Q_0: 13.32
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 10
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
 
-2025-02-19 22:28:19,533 - darwin
-2025-02-19 22:28:19,533 - Parameters:
-            _____________________
-            ini_I:0
-            T:4
-            mean demands: [10, 20, 10, 20]
-            unit_vari_costs: [1, 1, 1, 1]
-            unit_back_costs: [10, 10, 10, 10]
-            unit_hold_costs: [2, 2, 2, 2]
-            
-2025-02-19 22:47:14,781 - system: darwin
+
+2025-02-20 10:37:58,071 - system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 2.46
+objective value: 111.06
+Q_0: 18.10
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 10
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+
+2025-02-20 10:38:59,704 - system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 2.46
+objective value: 103.97
+Q_0: 12.49
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 10
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+
+2025-02-20 10:45:36,318 - system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 5.81
+objective value: 129.89
+Q_0: 11.92
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 10
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-02-20 10:47:00,101 - system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 45.25
+objective value: 208.12
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-02-20 10:48:25,843 - system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 48.78
+objective value: 223.40
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
