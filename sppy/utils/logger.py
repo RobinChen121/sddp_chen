@@ -18,7 +18,7 @@ class Logger:
         log_to_console: bool = True,
         log_to_file: bool = True,
         num_slots: int = 50,
-        directory="logs/",
+        directory=None,
     ):
         self.num_slots = num_slots
         file_logger = logging.getLogger("file_logger")
@@ -27,6 +27,15 @@ class Logger:
         console_logger.setLevel(logging.INFO)
 
         if log_to_file:
+            import os
+
+            if directory is None:
+                directory = (
+                    os.path.abspath(
+                        os.path.join(os.path.abspath(__file__), "..", "..")
+                    )  # grand directory
+                    + "/problem_specific/logs/"
+                )
             log_file = directory + file_name  # the full directory of the log file
             file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
             # Define the log formatter in the file log
@@ -60,8 +69,20 @@ class Logger:
             f"{iteration:<{width1}}{objective_value:>{width2}.4f}."
         )
 
-    def file_header_sddp(self, message):
-        self.file_logger.info(message)
+    def file_header_sddp(self):
+        import sys
+        import cpuinfo
+        import psutil
+
+        # get cpu information
+        cpu_info = cpuinfo.get_cpu_info()
+
+        memory_size = round(psutil.virtual_memory().total / (1024**3), 2)
+
+        self.file_logger.info(
+            f"computer: {cpu_info['brand_raw']}, cpu: {cpu_info['count']}"
+            + f"memory: {memory_size} GB, system: {sys.platform}"
+        )
 
     def file_body_sddp(self, description, message1, message2, message3):
         formatter_file_head = logging.Formatter("%(message)s")

@@ -8,8 +8,11 @@ Description:
 """
 
 
-def problem_specific(problem_name: str = 'newsvendor.py'):
-    pass
+def problem_specific(file_name: str = 'newsvendor.py'):
+    import os
+    file_name = os.path.dirname(os.path.abspath(__file__)) + '/problem_specific/' + file_name
+    import subprocess
+    subprocess.run(["python", file_name], check=True)
 
 
 def general():

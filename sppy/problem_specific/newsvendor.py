@@ -22,18 +22,21 @@ from gurobipy import Model, GRB
 from sppy.utils.sampling import Sampling, generate_scenario_paths
 from sppy.utils.logger import Logger
 
-mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
+# problem settings
+mean_demands = [10, 20, 10, 20]
 distribution = "poisson"
 T = len(mean_demands)
 ini_I = 0
 unit_vari_costs = [1 for _ in range(T)]
 unit_back_costs = [10 for _ in range(T)]
 unit_hold_costs = [2 for _ in range(T)]
+
+# sddp settings
 sample_num = 10
-sample_nums = [sample_num for t in range(T)]
-iter_num = 30
+iter_num = 10
 scenario_forward_num = 10  # sampled number of scenarios for forward computing
 
+sample_nums = [sample_num for t in range(T)]
 # detailed samples in each period
 sample_details = [[0.0 for _ in range(sample_nums[t])] for t in range(T)]
 for t in range(T):
@@ -350,10 +353,8 @@ cpu_time = end - start
 print("cpu time is %.3f s" % cpu_time)
 
 # the following codes are for outputting information in the log file
-import sys
-
 description = "This module build gurobi model for each uncertainty realization."
-logger.file_header_sddp(f"system: {sys.platform}")
+logger.file_header_sddp()
 result_txt = ("cpu_time", "objective value", "Q_0")
 results_values = (cpu_time, z, Q_0)
 results = zip(result_txt, results_values)
