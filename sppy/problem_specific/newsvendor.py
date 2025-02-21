@@ -69,7 +69,7 @@ start = time.process_time()
 while iter_ < iter_num:
     # sample a numer of scenarios from the full scenario tree
     scenario_paths = generate_scenario_paths(scenario_forward_num, sample_nums)
-    scenario_paths.sort()  # sort to mase same numbers together
+    scenario_paths.sort()  # sort to make same numbers together
 
     # forward
     if iter_ > 0:
@@ -132,7 +132,7 @@ while iter_ < iter_num:
 
     # forward loop
     for t in range(T):
-        for n in range(scenario_forward_num):
+        for n in range(scenario_forward_num): # parallel in this loop
             index = scenario_paths[n][t]
             demand = sample_details[t][index]
 
