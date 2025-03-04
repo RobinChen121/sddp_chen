@@ -341,3 +341,232 @@ unit_back_costs: [10, 10, 10, 10]
 unit_hold_costs: [2, 2, 2, 2]
 
 
+2025-02-23 22:37:34,779 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 0.03
+objective value: 45.00
+Q_0: 15.00
+____________________
+sddp parameters:
+sample numbers: [2, 2]
+scenario_forward_num: 2
+iter_num: 10
+____________________
+problem parameters:
+ini_I: 0
+T: 2
+distribution: self defined
+demand details = [[5, 15], [5, 15]]
+unit_vari_costs: [1, 1]
+unit_back_costs: [10, 10]
+unit_hold_costs: [2, 2]
+
+2025-02-24 17:18:48,334 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 2.50
+objective value: 108.83
+Q_0: 13.50
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 10
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+
+2025-02-24 17:19:15,543 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 17.69
+objective value: 105.75
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+
+2025-02-24 17:28:56,089 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 0.56
+objective value: 104.27
+Q_0: 22.96
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 10
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+
+2025-02-24 17:29:28,069 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 13.16
+objective value: 111.66
+Q_0: 13.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+
+2025-02-24 17:41:59,207 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 21.26
+objective value: 110.80
+Q_0: 13.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 10
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+
+2025-02-25 00:08:51,992 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 192.10
+objective value: 233.50
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 20
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-02-25 22:55:55,551 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 187.82
+objective value: 225.70
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 20
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-02-25 23:15:01,238 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 287.57
+objective value: 221.41
+Q_0: 13.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 25
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-02-25 23:19:45,948 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 276.10
+objective value: 223.95
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 30
+iter_num: 25
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+

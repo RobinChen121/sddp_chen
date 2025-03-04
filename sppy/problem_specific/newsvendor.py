@@ -5,6 +5,7 @@ Date: 2025/2/17 13:39
 Description:
     SDDP codes to solve the classic multi-stage newsvendor problem
     in which the parameters are: unit_vari_cost, unit_back_cost, unit_hold_cost.
+    Model for each uncertainty.
 
 -----
 ini_I = 0
@@ -15,6 +16,13 @@ mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
 ----
 218.41 for sdp optimal cost, java 0.5s;
 
+110.97 for sdp optimal cost of 4 periods, java 0.119s;
+
+model for each uncertainty:
+221.48 for sddp, 162.942s on a Mac for iter number 30, sample number 20, forward scenario number 10;
+233.50 for sddp, 192.09s on a Mac for iter number 30, sample number 10, forward scenario number 20;
+223.95 for sddp, 276.09s on a Mac for iter number 25, sample number 10, forward scenario number 30;
+
 """
 
 import time
@@ -23,18 +31,21 @@ from sppy.utils.sampling import Sampling, generate_scenario_paths
 from sppy.utils.logger import Logger
 
 # problem settings
-mean_demands = [10, 20, 10, 20]
+mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
 distribution = "poisson"
 T = len(mean_demands)
+# T = 2 # change 1
 ini_I = 0
 unit_vari_costs = [1 for _ in range(T)]
-unit_back_costs = [10 for _ in range(T)]
 unit_hold_costs = [2 for _ in range(T)]
+unit_back_costs = [10 for _ in range(T)]
 
 # sddp settings
 sample_num = 10
-iter_num = 10
-scenario_forward_num = 10  # sampled number of scenarios for forward computing
+scenario_forward_num = 30  # sampled number of scenarios for forward computing
+# sample_num = 10 # change 2
+# scenario_forward_num = 10 # change 3
+iter_num = 25
 
 sample_nums = [sample_num for t in range(T)]
 # detailed samples in each period
@@ -42,6 +53,8 @@ sample_details = [[0.0 for _ in range(sample_nums[t])] for t in range(T)]
 for t in range(T):
     sampling = Sampling(dist_name=distribution, mu=mean_demands[t])
     sample_details[t] = sampling.generate_samples(sample_nums[t])
+
+# sample_details = [[5, 15], [5, 15], [15, 5], [15, 15]] # change 4
 
 iter_ = 0
 theta_iniValue = 0  # initial theta values (profit) in each period
@@ -77,8 +90,9 @@ while iter_ < iter_num:
     m.update()
     m.Params.OutputFlag = 0
     m.optimize()
-    # m.write('iter' + str(iter) + '_main1.lp')
-    # m.write('iter' + str(iter) + '_main1.sol')
+    # m.write('iter' + str(iter_) + '_main2.lp')
+    # m.write('iter' + str(iter_) + '_main2.sol')
+    # pass
 
     q_values[iter_] = q.x
     theta_value = theta.x
@@ -179,7 +193,9 @@ while iter_ < iter_num:
             # optimize
             m_forward[t][n].Params.OutputFlag = 0
             m_forward[t][n].optimize()
-            # m_forward[t][n].write('iter' + str(iter) + '_sub_' + str(t+1) + '^' + str(n+1) + '-2.lp')
+            # if iter_ == 2 and t == 0:
+            #     m_forward[t][n].write('iter' + str(iter_) + '_sub_' + str(t+1) + '^' + str(n+1) + '-2.lp')
+            # pass
 
             I_forward_values[t][n] = I_forward[t][n].x
             B_forward_values[t][n] = B_forward[t][n].x
@@ -314,10 +330,19 @@ while iter_ < iter_num:
                 # optimize
                 m_backward[t][n][s].Params.OutputFlag = 0
                 m_backward[t][n][s].optimize()
-                # if t == 0 and n == 0 and iter > 0:
-                #     m_backward[t][n][s].write('iter' + str(iter) + '_sub_' + str(t+1) + '^' + str(n+1) + '_' + str(s+1) +'-2back.lp')
-                # if t > 0:
-                #     m_backward[t][n][s].write('iter' + str(iter) + '_sub_' + str(t+1) + '^' + str(n+1) + '_' + str(s+1) +'-2back.lp')
+                # if iter_ == 1 and t == 0:
+                #     m_backward[t][n][s].write(
+                #         "iter"
+                #         + str(iter_)
+                #         + "_sub_"
+                #         + str(t + 1)
+                #         + "^"
+                #         + str(n + 1)
+                #         + "_"
+                #         + str(s + 1)
+                #         + "-back-2.lp"
+                #     )
+                #     pass
 
                 pi = m_backward[t][n][s].getAttr(GRB.Attr.Pi)
                 rhs = m_backward[t][n][s].getAttr(GRB.Attr.RHS)
@@ -333,6 +358,9 @@ while iter_ < iter_num:
 
             avg_pi = sum(pi_values[t][n]) / S
             avg_pi_rhs = sum(pi_rhs_values[t][n]) / S
+
+            # if iter_ >= 1 and t == 0 and n == 0:
+            #     pass
 
             # recording cuts
             if t == 0 and n == 0:
