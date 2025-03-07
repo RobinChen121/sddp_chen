@@ -173,10 +173,6 @@ while iter_ < iter_num:
                 q_forward_values[t][n] = q[t + 1].x
 
     # backward loop
-    theta_backward_values = [
-        [[0 for s in range(sample_nums[t])] for n in range(scenario_forward_num)]
-        for t in range(T)
-    ]
     pi_values = [
         [[0 for s in range(sample_nums[t])] for n in range(scenario_forward_num)]
         for t in range(T)
@@ -210,7 +206,6 @@ while iter_ < iter_num:
                 # models[t + 1].update()
 
                 # optimize
-                models[t + 1].Params.OutputFlag = 0
                 models[t + 1].optimize()
                 # if iter_ == 1 and t == 0:
                 #     models[t + 1].write(
