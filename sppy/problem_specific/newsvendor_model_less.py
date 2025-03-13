@@ -28,7 +28,7 @@ model for each uncertainty:
 223.95 for sddp, 276.09s on a Mac for iter number 25, sample number 10, forward scenario number 30;
 
 Affecting SDDP performance factors:
-scenario_forward_num = 30  # the bigger the better
+scenario_forward_num = 30 # the bigger the better
 iter_num = 25 # large enough for a stable solution, 25 for this problem
 
 """
@@ -137,16 +137,15 @@ while iter_ < iter_num:
     for t in range(0, T):
         # add the cut constraints
         if iter_ > 0 and t < T - 1:
-            for i in range(iter_):
-                for nn in range(scenario_forward_num):
-                    if abs(slopes[t][nn][i]) < 1e-3:
-                        break
-                    # warnings of an unexpected type by python interpreter for the below line can be ignored
-                    models[t + 1].addConstr(
-                        theta[t + 1]
-                        >= slopes[t][nn][i] * (I[t] - B[t] + q[t + 1])
-                        + intercepts[t][nn][i]
-                    )
+            for nn in range(scenario_forward_num):
+                if abs(slopes[t][nn][-1]) < 1e-3:
+                    break
+                # warnings of an unexpected type by python interpreter for the below line can be ignored
+                models[t + 1].addConstr(
+                    theta[t + 1]
+                    >= slopes[t][nn][-1] * (I[t] - B[t] + q[t + 1])
+                    + intercepts[t][nn][-1]
+                )
 
         # I think parallel computing each time can only be applied at one stage, because
         # consecutive stages have some connections.
