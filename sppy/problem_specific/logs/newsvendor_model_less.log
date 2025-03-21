@@ -436,3 +436,95 @@ unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
 unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
 
 
+2025-03-20 08:26:17,982 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 13.10
+objective value: 215.10
+Q_0: 13.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 20
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-03-20 08:26:53,046 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 14.00
+objective value: 220.06
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 20
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-03-20 08:42:19,697 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 13.84
+objective value: 219.76
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 20
+iter_num: 30
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+
+2025-03-20 08:43:17,214 - computer: Apple M1 Pro, cpu: 8memory: 16.0 GB, system: darwin
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 21.08
+objective value: 212.66
+Q_0: 14.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10, 10, 10, 10, 10]
+scenario_forward_num: 30
+iter_num: 25
+____________________
+problem parameters:
+ini_I: 0
+T: 8
+distribution: poisson
+mean_demands: [10, 20, 10, 20, 10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1, 1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
+
+

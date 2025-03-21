@@ -11,6 +11,13 @@ Description:
     by removing duplicate coefficients, can save halftime (3 s);
     by further removing duplicates in each iteration, running time is 2.45 s.
 
+    by removing big-M constraint, running time is 2.41 s.
+
+    pre-solve some variables speed up little in the python.
+
+
+
+
 """
 
 import time
@@ -60,7 +67,7 @@ iter_ = 0
 env = Env(params={"OutputFlag": 0})
 models = [Model(env=env) for _ in range(T + 1)]
 q = [Any for _ in range(T)]
-q_pre = [Any for _ in range(T)]  # previously T - 1
+q_pre = [Any for _ in range(T - 1)]  # previously T - 1
 theta = [Any for _ in range(T)]
 I = [Any for _ in range(T)]
 B = [Any for _ in range(T)]
@@ -135,18 +142,20 @@ slopes3 = [[[0 for _ in range(N)] for _ in range(T)] for _ in range(iter_num)]
 intercepts = [[[0 for _ in range(N)] for _ in range(T)] for _ in range(iter_num)]
 q_values = [[[0 for _ in range(N)] for _ in range(T)] for _ in range(iter_num)]
 q_pre_values = [[[0 for _ in range(N)] for _ in range(T)] for _ in range(iter_num)]
-cpu_time = 0
+I_forward_values = [[[0 for n in range(N)] for t in range(T)] for _ in range(iter_num)]
+B_forward_values = [[[0 for n in range(N)] for t in range(T)] for _ in range(iter_num)]
+cash_forward_values = [
+    [[0 for n in range(N)] for t in range(T)] for _ in range(iter_num)
+]
+W0_forward_values = [[[0 for n in range(N)] for t in range(T)] for _ in range(iter_num)]
+W1_forward_values = [[[0 for n in range(N)] for t in range(T)] for _ in range(iter_num)]
+W2_forward_values = [[[0 for n in range(N)] for t in range(T)] for _ in range(iter_num)]
+
 objs = [0 for _ in range(iter_num)]
 cut_coefficients_cache = [set() for t in range(T)]
-
+cpu_time = 0
 start = time.process_time()
 while iter_ < iter_num:
-    I_forward_values = [[0 for n in range(N)] for t in range(T)]
-    B_forward_values = [[0 for n in range(N)] for t in range(T)]
-    cash_forward_values = [[0 for n in range(N)] for t in range(T)]
-    W0_forward_values = [[0 for n in range(N)] for t in range(T)]
-    W1_forward_values = [[0 for n in range(N)] for t in range(T)]
-    W2_forward_values = [[0 for n in range(N)] for t in range(T)]
 
     # sample a numer of scenarios from the full scenario tree
     scenario_paths = generate_scenario_paths(N, sample_nums)
@@ -162,7 +171,13 @@ while iter_ < iter_num:
     #     [1, 1, 1],
     # ]
 
+    skip_iter = False # For stage 1, if the added cut constraint is same with previous added, skip solving the model
     if iter_ > 0:
+        if iter_ == 1:  # remove the big M constraints at iteration 2
+            index = models[0].NumConstrs - 1
+            models[0].remove(models[0].getConstrs()[index])
+            models[0].update()
+
         this_coefficient = (
             slopes1[iter_ - 1][0][0],
             slopes2[iter_ - 1][0][0],
@@ -183,24 +198,46 @@ while iter_ < iter_num:
             )
             models[0].update()
             cut_coefficients_cache[0].add(this_coefficient)
-            pass
+        else:
+            skip_iter = True
 
-    models[0].optimize()
-    # if iter_ >= 0:
-    #     models[0].write("iter" + str(iter_ + 1) + "_main-1.lp")
-    #     models[0].write("iter" + str(iter_ + 1) + "_main-1.sol")
-    #     pass
+    if skip_iter:
+        q_values[iter_][0] = [q_values[iter_ - 1][0][0] for n in range(N)]
+        W0_forward_values[iter_][0] = [
+            W0_forward_values[iter_ - 1][0][0] for n in range(N)
+        ]
+        W1_forward_values[iter_][0] = [
+            W1_forward_values[iter_ - 1][0][0] for n in range(N)
+        ]
+        W2_forward_values[iter_][0] = [
+            W2_forward_values[iter_ - 1][0][0] for n in range(N)
+        ]
+        pass
+    else:
+        models[0].optimize()
+        # if iter_ >= 0:
+        #     models[0].write("iter" + str(iter_ + 1) + "_main-1.lp")
+        #     models[0].write("iter" + str(iter_ + 1) + "_main-1.sol")
+        #     pass
 
-    # forward
-    q_values[iter_][0] = [q[0].x for n in range(N)]
-    W0_forward_values[0] = [W0[0].x for n in range(N)]
-    W1_forward_values[0] = [W1[0].x for n in range(N)]
-    W2_forward_values[0] = [W2[0].x for n in range(N)]
+        # print(f"\niteration: {iter_}, 约束的 Slack 值:")
+        # for constr in models[0].getConstrs():
+        #     print(f"{constr.constrName}: Slack = {constr.slack:.2f}")
+
+        # forward
+        q_values[iter_][0] = [q[0].x for n in range(N)]
+        W0_forward_values[iter_][0] = [W0[0].x for n in range(N)]
+        W1_forward_values[iter_][0] = [W1[0].x for n in range(N)]
+        W2_forward_values[iter_][0] = [W2[0].x for n in range(N)]
 
     for t in range(1, T + 1):
 
         # add the cut constraints
         if iter_ > 0 and t < T:
+            if iter_ == 1:  # remove the big M constraints at iteration 2
+                index = models[t].NumConstrs - 1
+                models[t].remove(models[t].getConstrs()[index])
+
             cut_coefficients = [
                 [
                     slopes1[iter_ - 1][t][nn],
@@ -238,18 +275,21 @@ while iter_ < iter_num:
         for n in range(N):
             index = scenario_paths[n][t - 1]
             demand = sample_details[t - 1][index]
+            rhs1 = 0
             if t == 1:  # actually the model in the 2nd stage
                 rhs1 = ini_I - demand
             else:
                 rhs1 = (
-                    I_forward_values[t - 1][n] + q_pre_values[iter_][t - 2][n] - demand
+                    I_forward_values[iter_][t - 1][n]
+                    + q_pre_values[iter_][t - 2][n]
+                    - demand
                 )
             if t < T:
                 rhs2 = (
                     prices[t - 1] * demand
-                    + (1 + r0) * W0_forward_values[t - 1][n]
-                    - (1 + r1) * W1_forward_values[t - 1][n]
-                    - (1 + r2) * W2_forward_values[t - 1][n]
+                    + (1 + r0) * W0_forward_values[iter_][t - 1][n]
+                    - (1 + r1) * W1_forward_values[iter_][t - 1][n]
+                    - (1 + r2) * W2_forward_values[iter_][t - 1][n]
                 )
                 rhs3 = q_values[iter_][t - 1][n]
             if t == T:
@@ -274,6 +314,18 @@ while iter_ < iter_num:
                 models[t].setAttr("RHS", models[t].getConstrs()[1], rhs2)
                 models[t].setAttr("RHS", models[t].getConstrs()[2], rhs3)
 
+            # set lb and ub for some variables
+            this_I_value = rhs1 if rhs1 > 0 else 0
+            this_B_value = -rhs1 if rhs1 < 0 else 0
+            I[t - 1].setAttr(GRB.Attr.LB, this_I_value)
+            I[t - 1].setAttr(GRB.Attr.UB, this_I_value)
+            B[t - 1].setAttr(GRB.Attr.LB, this_B_value)
+            B[t - 1].setAttr(GRB.Attr.UB, this_B_value)
+            if t < T:
+                this_end_cash = rhs2 - prices[t - 1] * this_B_value
+                cash[t - 1].setAttr(GRB.Attr.LB, this_end_cash)
+                cash[t - 1].setAttr(GRB.Attr.UB, this_end_cash)
+
             # optimize
             models[t].optimize()
             # if iter_ == 3 and t == 1:
@@ -296,16 +348,16 @@ while iter_ < iter_num:
             # #     + "-1.sol"
             # # )
             #     pass
-            I_forward_values[t - 1][n] = I[t - 1].x
-            B_forward_values[t - 1][n] = B[t - 1].x
-            cash_forward_values[t - 1][n] = cash[t - 1].x
+            I_forward_values[iter_][t - 1][n] = I[t - 1].x
+            B_forward_values[iter_][t - 1][n] = B[t - 1].x
+            cash_forward_values[iter_][t - 1][n] = cash[t - 1].x
 
             if t < T:
                 q_values[iter_][t][n] = q[t].x
                 q_pre_values[iter_][t - 1][n] = q_pre[t - 1].x
-                W1_forward_values[t][n] = W1[t].x
-                W0_forward_values[t][n] = W0[t].x
-                W2_forward_values[t][n] = W2[t].x
+                W1_forward_values[iter_][t][n] = W1[t].x
+                W0_forward_values[iter_][t][n] = W0[t].x
+                W2_forward_values[iter_][t][n] = W2[t].x
 
     # backward
     intercept_values = [
@@ -332,16 +384,16 @@ while iter_ < iter_num:
                     rhs1 = ini_I - demand
                 else:
                     rhs1 = (
-                        I_forward_values[t - 1][n]
+                        I_forward_values[iter_][t - 1][n]
                         + q_pre_values[iter_][t - 2][n]
                         - demand
                     )
                 if t < T + 1:  # test for T
                     rhs2 = (
                         prices[t - 1] * demand
-                        + (1 + r0) * W0_forward_values[t - 1][n]
-                        - (1 + r1) * W1_forward_values[t - 1][n]
-                        - (1 + r2) * W2_forward_values[t - 1][n]
+                        + (1 + r0) * W0_forward_values[iter_][t - 1][n]
+                        - (1 + r1) * W1_forward_values[iter_][t - 1][n]
+                        - (1 + r2) * W2_forward_values[iter_][t - 1][n]
                     )
                 if t < T:
                     rhs3 = q_values[iter_][t - 1][n]
@@ -367,6 +419,15 @@ while iter_ < iter_num:
                     models[t].setAttr("RHS", models[t].getConstrs()[1], rhs2)
                 if t < T:
                     models[t].setAttr("RHS", models[t].getConstrs()[2], rhs3)
+
+                # de set the lb and ub for some variables
+                I[t - 1].setAttr(GRB.Attr.LB, 0.0)
+                I[t - 1].setAttr(GRB.Attr.UB, GRB.INFINITY)
+                B[t - 1].setAttr(GRB.Attr.LB, 0.0)
+                B[t - 1].setAttr(GRB.Attr.UB, GRB.INFINITY)
+                if t < T:
+                    cash[t - 1].setAttr(GRB.Attr.LB, -GRB.INFINITY)
+                    cash[t - 1].setAttr(GRB.Attr.UB, GRB.INFINITY)
 
                 # optimize
                 models[t].optimize()
@@ -457,5 +518,5 @@ print("after %d iteration: " % iter_)
 print("final expected cash balance is %.2f" % final_value)
 print("ordering Q in the first period is %.2f" % Q1)
 print("cpu time is %.3f s" % cpu_time)
-# gap = (-opt + final_value) / opt
-# print("optimality gap is %.2f%%" % (100 * gap))
+gap = (-opt + final_value) / opt
+print("optimality gap is %.2f%%" % (100 * gap))

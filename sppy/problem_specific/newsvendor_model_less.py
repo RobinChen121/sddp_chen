@@ -18,9 +18,8 @@ mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
 110.97 for sdp optimal cost of 4 periods, java 0.119s;
 
 model only for each stage:
-194.46 for sddp, 58.968s on a Mac for iter number 30, sample number 20, forward scenario number 10;
-211.54 for sddp, 118.37s on a Mac for iter number 30, sample number 10, forward scenario number 20;
-221.30 for sddp, 162.43s on a Mac for iter number 25, sample number 10, forward scenario number 30;
+221.30 for sddp, 21.08s on a Mac for iter number 25, sample number 10, forward scenario number 30;
+221.30 for sddp, 13.844s on a Mac for iter number 30, sample number 10, forward scenario number 20;
 
 model for each uncertainty:
 221.48 for sddp, 162.942s on a Mac for iter number 30, sample number 20, forward scenario number 10;

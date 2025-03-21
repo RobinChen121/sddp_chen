@@ -17,6 +17,7 @@ mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
 
 multiscenario in the forward:
 227.94 for sddp, 159.84s on a Mac for iter number 25, sample number 10, forward scenario number 30;
+220.3 for sddp, 139.42s on a Mac for iter number 30, sample number 10, forward scenario number 20;
 
 -----
 Reply from the Gurobi staff about using multi scenario for LP problems:
@@ -43,8 +44,8 @@ unit_back_costs = [10 for _ in range(T)]
 
 # sddp settings
 sample_num = 10  # change 2
-scenario_forward_num = 30  # change 3
-iter_num = 25
+scenario_forward_num = 20  # change 3
+iter_num = 30
 
 sample_nums = [sample_num for t in range(T)]
 # detailed samples in each period
