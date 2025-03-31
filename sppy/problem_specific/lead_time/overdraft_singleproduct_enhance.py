@@ -229,7 +229,6 @@ while iter_ < iter_num:
         W0_forward_values[iter_][0] = [W0[0].x for n in range(N)]
         W1_forward_values[iter_][0] = [W1[0].x for n in range(N)]
         W2_forward_values[iter_][0] = [W2[0].x for n in range(N)]
-
     for t in range(1, T + 1):
 
         # add the cut constraints
@@ -374,8 +373,6 @@ while iter_ < iter_num:
     ]
 
     for t in range(T, 0, -1):
-        # add the cut constraints
-
         for n in range(N):
             S = len(sample_details[t - 1])
             for s in range(S):

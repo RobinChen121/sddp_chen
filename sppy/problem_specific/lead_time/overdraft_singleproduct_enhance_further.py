@@ -47,7 +47,7 @@ ini_I = 0
 ini_cash = 0
 mean_demands = [15, 15, 15, 15]  # [10, 20, 10, 20]
 distribution = "poisson"
-T = 4  # len(mean_demands)  # change 1
+T = len(mean_demands)  # change 1
 unit_vari_costs = [1 for _ in range(T)]
 prices = [10 for _ in range(T)]
 unit_salvage = 0.5
@@ -434,7 +434,7 @@ while iter_ < iter_num:
                 this_W = rhs2 if rhs1 > 0 else rhs2 + prices[t - 1] * rhs1
                 if s > 0:
                     if t < T:
-                        this_W -= overhead_costs[t] + last_q
+                        this_W -= overhead_costs[t] + last_q * unit_vari_costs[t]
                         if this_W > 0:
                             W_status = WStatus.ATW0
                         elif this_W < -U:
