@@ -223,7 +223,7 @@ while iter_ < iter_num:
                 rhs1 = ini_I - demand
             else:
                 rhs1 = (
-                    I_forward_values[t - 1][n] + q_pre_values[iter_][t - 2][n] - demand
+                    I_forward_values[t - 2][n] + q_pre_values[iter_][t - 2][n] - demand
                 )
             if t < T:
                 rhs2 = (
@@ -313,7 +313,7 @@ while iter_ < iter_num:
                     rhs1 = ini_I - demand
                 else:
                     rhs1 = (
-                        I_forward_values[t - 1][n]
+                        I_forward_values[t - 2][n]
                         + q_pre_values[iter_][t - 2][n]
                         - demand
                     )

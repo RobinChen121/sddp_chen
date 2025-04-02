@@ -13,7 +13,7 @@ Description:
 
     by removing big-M constraint, running time is 2.41 s.
 
-    pre-solve some variables speed up little in the python.
+    pre-solve some variables speed up a little in python.
 
 
 
@@ -279,7 +279,7 @@ while iter_ < iter_num:
                 rhs1 = ini_I - demand
             else:
                 rhs1 = (
-                    I_forward_values[iter_][t - 1][n]
+                    I_forward_values[iter_][t - 2][n]
                     + q_pre_values[iter_][t - 2][n]
                     - demand
                 )
@@ -381,11 +381,11 @@ while iter_ < iter_num:
                     rhs1 = ini_I - demand
                 else:
                     rhs1 = (
-                        I_forward_values[iter_][t - 1][n]
+                        I_forward_values[iter_][t - 2][n]
                         + q_pre_values[iter_][t - 2][n]
                         - demand
                     )
-                if t < T + 1:  # test for T
+                if t < T:  # test for T
                     rhs2 = (
                         prices[t - 1] * demand
                         + (1 + r0) * W0_forward_values[iter_][t - 1][n]
@@ -414,7 +414,6 @@ while iter_ < iter_num:
                 models[t].setAttr("RHS", models[t].getConstrs()[0], rhs1)
                 if t < T:  # test for T
                     models[t].setAttr("RHS", models[t].getConstrs()[1], rhs2)
-                if t < T:
                     models[t].setAttr("RHS", models[t].getConstrs()[2], rhs3)
 
                 # de set the lb and ub for some variables

@@ -304,7 +304,7 @@ while iter_ < iter_num:
                 rhs1 = ini_I - demand
             else:
                 rhs1 = (
-                    I_forward_values[iter_][t - 1][n]
+                    I_forward_values[iter_][t - 2][n]
                     + q_pre_values[iter_][t - 2][n]
                     - demand
                 )
@@ -399,7 +399,7 @@ while iter_ < iter_num:
                     rhs1 = ini_I - demand
                 else:
                     rhs1 = (
-                        I_forward_values[iter_][t - 1][n]
+                        I_forward_values[iter_][t - 2][n]
                         + q_pre_values[iter_][t - 2][n]
                         - demand
                     )
@@ -526,13 +526,12 @@ while iter_ < iter_num:
                     intercept_values[t - 1][n][s] += (
                         -pi[0] * demand
                         + pi[1] * prices[t - 1] * demand
-                        - prices[t - 1] * demand
                         + overhead_costs[t]
+                        - prices[t - 1] * demand
                     )
                 else:
                     intercept_values[t - 1][n][s] += (
                         -pi[0] * demand
-                        # + pi[1] * prices[t - 1] * demand
                         - prices[t - 1] * demand
                     )
                 for sk in range(3, num_con):  # previously inside the above loop

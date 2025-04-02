@@ -417,22 +417,22 @@ while iter_ < iter_num:
                     intercept_values[t - 1][n][s] += (
                         -pi[0] * demand
                         + pi[1] * prices[t - 1] * demand
-                        - pi[1]
+                        + overhead_costs[t]  # this overhead_cost is from the objective
+                        - prices[t - 1] * demand # this overhead_cost is from the objective
+                        - pi[1] # previously not include the following 1 line
                         * overhead_costs[
                             t - 1
-                        ]  # previously not include the following 2 lines
-                        - prices[t - 1] * demand
-                        + overhead_costs[t]
+                        ]
                     )
                 else:
                     intercept_values[t - 1][n][s] += (
                         -pi[0] * demand
-                        + pi[1] * prices[t - 1] * demand
+                        - prices[t - 1] * demand
+                        + pi[1] * prices[t - 1] * demand # previously not include the following 2 lines
                         - pi[1]
                         * overhead_costs[
                             t - 1
-                        ]  # previously not include the following 1 line
-                        - prices[t - 1] * demand
+                        ]
                     )
 
                 for sk in range(3, num_con):  # previously inside the above loop
