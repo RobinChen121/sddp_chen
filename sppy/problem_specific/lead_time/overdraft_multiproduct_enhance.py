@@ -3,9 +3,10 @@ Python version: 3.12.7
 Author: Zhen Chen, chen.zhen5526@gmail.com
 Date: 2025/3/22 12:02
 Description: 
-    
+    Setting lb or ub for some values in advance actually slows down the computation.
 
 """
+
 import itertools
 import time
 from gurobipy import Model, GRB, Env
@@ -48,7 +49,7 @@ r2 = 2  # penalty interest rate for overdraft exceeding the limit does not affec
 U = 500  # overdraft limit
 
 sample_num = 10  # change 1
-scenario_num = 10 # sampled number of scenarios for forward computing # change 2
+scenario_num = 10  # sampled number of scenarios for forward computing # change 2
 iter_num = 30
 
 sample_nums1 = [sample_num for t in range(T)]
@@ -59,6 +60,7 @@ sample_details2 = [[0.0 for _ in range(sample_nums2[t])] for t in range(T)]
 for t in range(T):
     sampling1 = Sampling(dist_name=distribution, mu=mean_demands1[t])
     sampling2 = Sampling(dist_name=distribution, mu=mean_demands2[t])
+
     # sampling1 = Sampling(
     #     dist_name=distribution, values=(demand1_values[t], demand1_weights[t])
     # )
@@ -133,14 +135,14 @@ for t in range(T + 1):
         # noinspection PyTypeChecker
         models[t].addConstr(I1[t - 1] - B1[t - 1] == 0)
         models[t].addConstr(I2[t - 1] - B2[t - 1] == 0)
-        if t == T:  # not very necessary
-            cash[t - 1] = models[t].addVar(
-                lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="cash_" + str(t)
-            )
-            models[t].addConstr(
-                cash[t - 1] + prices1[t - 1] * B1[t - 1] + prices2[t - 1] * B2[t - 1]
-                == 0
-            )
+        # if t == T:  # not very necessary
+        #     cash[t - 1] = models[t].addVar(
+        #         lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="cash_" + str(t)
+        #     )
+        #     models[t].addConstr(
+        #         cash[t - 1] + prices1[t - 1] * B1[t - 1] + prices2[t - 1] * B2[t - 1]
+        #         == 0
+        #     )
         if t < T:
             models[t].addConstr(
                 cash[t - 1] + prices1[t - 1] * B1[t - 1] + prices2[t - 1] * B2[t - 1]
@@ -194,30 +196,65 @@ for t in range(T + 1):
         )
     models[t].update()
 
-slopes1_1 = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-slopes1_2 = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-slopes2 = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-slopes3_1 = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-slopes3_2 = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-intercepts = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
+slopes1_1 = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+slopes1_2 = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+slopes2 = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+slopes3_1 = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+slopes3_2 = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+intercepts = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
 
-q1_values = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-q1_pre_values = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-I1_forward_values = [[[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)]
-B1_forward_values = [[[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)]
-q2_values = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-q2_pre_values = [[[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)]
-I2_forward_values = [[[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)]
-B2_forward_values = [[[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)]
+q1_values = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+q1_pre_values = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+I1_forward_values = [
+    [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
+]
+B1_forward_values = [
+    [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
+]
+q2_values = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+q2_pre_values = [
+    [[0 for _ in range(scenario_num)] for _ in range(T)] for _ in range(iter_num)
+]
+I2_forward_values = [
+    [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
+]
+B2_forward_values = [
+    [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
+]
 
 cash_forward_values = [
     [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
 ]
-W0_forward_values = [[[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)]
-W1_forward_values = [[[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)]
-W2_forward_values = [[[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)]
+W0_forward_values = [
+    [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
+]
+W1_forward_values = [
+    [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
+]
+W2_forward_values = [
+    [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
+]
 
 objs = [0 for _ in range(iter_num)]
+cut_coefficients_cache = [set() for t in range(T)]
 cpu_time = 0
 start = time.process_time()
 while iter_ < iter_num:
@@ -255,25 +292,30 @@ while iter_ < iter_num:
             slopes3_2[iter_ - 1][0][0],
             intercepts[iter_ - 1][0][0],
         )
-        models[0].addConstr(
-            theta[0]
-            >= slopes1_1[iter_ - 1][0][0] * ini_I1
-            + slopes1_2[iter_ - 1][0][0] * ini_I2
-            + slopes2[iter_ - 1][0][0]
-            * ((1 + r0) * W0[0] - (1 + r1) * W1[0] - (1 + r2) * W2[0])
-            # * (
-            #     ini_cash
-            #     - unit_vari_costs1[0] * q1[0]
-            #     - unit_vari_costs2[0] * q2[0]
-            #     - r1 * W1[0]
-            #     + r0 * W0[0]
-            #     - r2 * W2[0]
-            # )
-            + slopes3_1[iter_ - 1][0][0] * q1[0]
-            + slopes3_2[iter_ - 1][0][0] * q2[0]
-            + intercepts[iter_ - 1][0][0]
-        )
+        if (
+            not cut_coefficients_cache[0]
+            or this_coefficient not in cut_coefficients_cache[0]
+        ):
+            models[0].addConstr(
+                theta[0]
+                >= slopes1_1[iter_ - 1][0][0] * ini_I1
+                + slopes1_2[iter_ - 1][0][0] * ini_I2
+                + slopes2[iter_ - 1][0][0]
+                * ((1 + r0) * W0[0] - (1 + r1) * W1[0] - (1 + r2) * W2[0])
+                # * (
+                #     ini_cash
+                #     - unit_vari_costs1[0] * q1[0]
+                #     - unit_vari_costs2[0] * q2[0]
+                #     - r1 * W1[0]
+                #     + r0 * W0[0]
+                #     - r2 * W2[0]
+                # )
+                + slopes3_1[iter_ - 1][0][0] * q1[0]
+                + slopes3_2[iter_ - 1][0][0] * q2[0]
+                + intercepts[iter_ - 1][0][0]
+            )
         models[0].update()
+        cut_coefficients_cache[0].add(this_coefficient)
 
     models[0].optimize()
     # if iter_ >= 1:
@@ -307,25 +349,34 @@ while iter_ < iter_num:
                 ]
                 for nn in range(scenario_num)
             ]
-            final_coefficients = remove_duplicate_rows(cut_coefficients) # cut_coefficients
+            final_coefficients = remove_duplicate_rows(
+                cut_coefficients
+            )  # cut_coefficients
             for final_coefficient in final_coefficients:
-                models[t].addConstr(
-                    theta[t]
-                    >= final_coefficient[0] * (I1[t - 1] + q1_pre[t - 1])
-                    + final_coefficient[1] * (I2[t - 1] + q2_pre[t - 1])
-                    + final_coefficient[2]
-                    * ((1 + r0) * W0[t] - (1 + r1) * W1[t] - (1 + r2) * W2[t])
-                    # * (
-                    #     cash[t - 1]
-                    #     - unit_vari_costs1[t] * q1[t]
-                    #     - unit_vari_costs2[t] * q2[t]
-                    #     + r0 * W0[t]
-                    #     - r1 * W1[t]
-                    #     - r2 * W2[t]
-                    # )
-                    + final_coefficient[3] * q1[t]
-                    + final_coefficient[4] * q2[t]
-                    + final_coefficient[5])
+                final_coefficient = tuple(final_coefficient)
+                if (
+                    not cut_coefficients_cache[t]
+                    or final_coefficient not in cut_coefficients_cache[t]
+                ):
+                    models[t].addConstr(
+                        theta[t]
+                        >= final_coefficient[0] * (I1[t - 1] + q1_pre[t - 1])
+                        + final_coefficient[1] * (I2[t - 1] + q2_pre[t - 1])
+                        + final_coefficient[2]
+                        * ((1 + r0) * W0[t] - (1 + r1) * W1[t] - (1 + r2) * W2[t])
+                        # * (
+                        #     cash[t - 1]
+                        #     - unit_vari_costs1[t] * q1[t]
+                        #     - unit_vari_costs2[t] * q2[t]
+                        #     + r0 * W0[t]
+                        #     - r1 * W1[t]
+                        #     - r2 * W2[t]
+                        # )
+                        + final_coefficient[3] * q1[t]
+                        + final_coefficient[4] * q2[t]
+                        + final_coefficient[5]
+                    )
+                    cut_coefficients_cache[t].add(final_coefficient)
 
         for n in range(scenario_num):
             index1 = scenario_paths1[n][t - 1]
@@ -375,8 +426,7 @@ while iter_ < iter_num:
                     # - r2 * W2_forward_values[iter_][t - 1][n]
                     # + prices1[t - 1] * demand1
                     # + prices2[t - 1] * demand2
-
-                    + prices1[t - 1] * demand1
+                    +prices1[t - 1] * demand1
                     + prices2[t - 1] * demand2
                     + (1 + r0) * W0_forward_values[iter_][t - 1][n]
                     - (1 + r1) * W1_forward_values[iter_][t - 1][n]
@@ -413,6 +463,24 @@ while iter_ < iter_num:
                 models[t].setAttr("RHS", models[t].getConstrs()[3], rhs3_1)
                 models[t].setAttr("RHS", models[t].getConstrs()[4], rhs3_2)
 
+            # set lb and ub for some variables
+            # this_I1_value = rhs1_1 if rhs1_1 > 0 else 0
+            # this_I2_value = rhs1_2 if rhs1_2 > 0 else 0
+            # this_B1_value = -rhs1_1 if rhs1_1 < 0 else 0
+            # this_B2_value = -rhs1_2 if rhs1_2< 0 else 0
+            # I1[t - 1].setAttr(GRB.Attr.LB, this_I1_value)
+            # I1[t - 1].setAttr(GRB.Attr.UB, this_I1_value)
+            # I2[t - 1].setAttr(GRB.Attr.LB, this_I2_value)
+            # I2[t - 1].setAttr(GRB.Attr.UB, this_I2_value)
+            # B1[t - 1].setAttr(GRB.Attr.LB, this_B1_value)
+            # B1[t - 1].setAttr(GRB.Attr.UB, this_B1_value)
+            # B2[t - 1].setAttr(GRB.Attr.LB, this_B2_value)
+            # B2[t - 1].setAttr(GRB.Attr.UB, this_B2_value)
+            # if t < T:
+            #     this_end_cash = rhs2 - prices1[t - 1] * this_B1_value - prices2[t - 1] * this_B2_value
+            #     cash[t - 1].setAttr(GRB.Attr.LB, this_end_cash)
+            #     cash[t - 1].setAttr(GRB.Attr.UB, this_end_cash)
+
             # optimize
             models[t].optimize()
             # if iter_ == 0 and t == 1:
@@ -425,7 +493,6 @@ while iter_ < iter_num:
             I2_forward_values[iter_][t - 1][n] = I2[t - 1].x
             B2_forward_values[iter_][t - 1][n] = B2[t - 1].x
             cash_forward_values[iter_][t - 1][n] = cash[t - 1].x
-
 
             if t < T:
                 q1_values[iter_][t][n] = q1[t].x
@@ -509,7 +576,6 @@ while iter_ < iter_num:
                         # - r2 * W2_forward_values[iter_][t - 1][n]
                         # + prices1[t - 1] * demand1
                         # + prices2[t - 1] * demand2
-
                         prices1[t - 1] * demand1
                         + prices2[t - 1] * demand2
                         + (1 + r0) * W0_forward_values[iter_][t - 1][n]
@@ -548,7 +614,8 @@ while iter_ < iter_num:
                     models[t].setAttr("RHS", models[t].getConstrs()[3], rhs3_1)
                     models[t].setAttr("RHS", models[t].getConstrs()[4], rhs3_2)
 
-                # # de set the lb and ub for some variables
+                # de set the lb and ub for some variables
+                # since backward is for generating dual values
                 # I1[t - 1].setAttr(GRB.Attr.LB, 0.0)
                 # I1[t - 1].setAttr(GRB.Attr.UB, GRB.INFINITY)
                 # B1[t - 1].setAttr(GRB.Attr.LB, 0.0)
@@ -648,7 +715,10 @@ print("********************************************")
 final_value = -models[0].objVal
 Q1 = q1_values[iter_ - 1][0][0]
 Q2 = q2_values[iter_ - 1][0][0]
-print("after %d iteration, sample numer %d, scenario %d: " % (iter_, sample_num, scenario_num))
+print(
+    "after %d iteration, sample numer %d, scenario %d: "
+    % (iter_, sample_num, scenario_num)
+)
 print("final expected cash balance is %.2f" % final_value)
 print("ordering Q1 in the first period is %.2f" % Q1)
 print("ordering Q2 in the first period is %.2f" % Q2)

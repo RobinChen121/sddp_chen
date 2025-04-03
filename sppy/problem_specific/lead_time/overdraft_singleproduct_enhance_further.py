@@ -443,7 +443,7 @@ while iter_ < iter_num:
                             W_status = WStatus.ATW1
                     if t < T:
                         if (I_status, W_status) in result_status[t - 1][n]:
-                            skip = True # a heuristic
+                            skip = True  # a heuristic
                             pi, rhs = result_status[t - 1][n][(I_status, W_status)]
                             rhs[0] = rhs1
                             rhs[1] = rhs2
@@ -531,8 +531,7 @@ while iter_ < iter_num:
                     )
                 else:
                     intercept_values[t - 1][n][s] += (
-                        -pi[0] * demand
-                        - prices[t - 1] * demand
+                        -pi[0] * demand - prices[t - 1] * demand
                     )
                 for sk in range(3, num_con):  # previously inside the above loop
                     intercept_values[t - 1][n][s] += pi[sk] * rhs[sk]
@@ -551,7 +550,7 @@ while iter_ < iter_num:
             slopes3[iter_][t - 1][n] = avg_slope3
             intercepts[iter_][t - 1][n] = avg_intercept
 
-            if iter_ == 4 and t == 2 and n == 5: # error happens at index: 4, 2, 5, 1
+            if iter_ == 4 and t == 2 and n == 5:  # error happens at index: 4, 2, 5, 1
                 pass
 
     objs[iter_] = -models[0].objVal
