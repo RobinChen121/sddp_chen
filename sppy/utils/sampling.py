@@ -104,7 +104,7 @@ class Sampling:
         """
         samples = [0.0 for _ in range(sample_num)]
         for i in range(sample_num):
-            # np.random.seed(10000)
+            np.random.seed(10000)
             rand_p = np.random.uniform(i / sample_num, (i + 1) / sample_num)
             samples[i] = self.dist.ppf(rand_p)
         return samples

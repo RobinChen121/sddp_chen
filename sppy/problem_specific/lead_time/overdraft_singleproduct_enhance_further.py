@@ -467,7 +467,7 @@ while iter_ < iter_num:
                     pi = models[t].getAttr(GRB.Attr.Pi)
                     rhs = models[t].getAttr(GRB.Attr.RHS)
                     if t < T:
-                        this_W -= overhead_costs[t] + last_q
+                        this_W -= overhead_costs[t] + last_q * unit_vari_costs[t]
                         if this_W > 0:
                             W_status = WStatus.ATW0
                         elif this_W < -U:

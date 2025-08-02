@@ -34,6 +34,18 @@ ordering Q1 in the first period is 45.00
 ordering Q2 in the first period is 24.67
 cpu time is 17.306 s
 
+4 periods Poisson:
+after 30 iterations, sample number 10, scenario 10:
+final expected cash balance is 217.70
+ordering Q1 in the first period is 93.98
+ordering Q2 in the first period is 20.72
+cpu time is 25.380 s；
+after 50 iterations, sample number 10, scenario 20:
+final expected cash balance is 214.19
+ordering Q1 in the first period is 38.04
+ordering Q2 in the first period is 24.87
+cpu time is 217.559 s；
+
 """
 
 import itertools
@@ -48,7 +60,7 @@ def remove_duplicate_rows(matrix):
     return list(map(list, set(map(tuple, matrix))))  # 先转换成元组去重，再转换回列表
 
 
-mean_demands1 = [30, 30, 30]  # higher average demand vs lower average demand
+mean_demands1 = [30, 30, 30, 30]  # higher average demand vs lower average demand
 mean_demands2 = [i * 0.5 for i in mean_demands1]
 T = len(mean_demands1)
 
@@ -78,8 +90,8 @@ r2 = 2  # penalty interest rate for overdraft exceeding the limit does not affec
 U = 500  # overdraft limit
 
 sample_num = 10  # change 1
-scenario_num = 10 # sampled number of scenarios for forward computing # change 2
-iter_num = 30
+scenario_num = 20 # sampled number of scenarios for forward computing # change 2
+iter_num = 50
 
 sample_nums1 = [sample_num for t in range(T)]
 sample_nums2 = [sample_num for t in range(T)]
@@ -89,6 +101,7 @@ sample_details2 = [[0.0 for _ in range(sample_nums2[t])] for t in range(T)]
 for t in range(T):
     sampling1 = Sampling(dist_name=distribution, mu=mean_demands1[t])
     sampling2 = Sampling(dist_name=distribution, mu=mean_demands2[t])
+
     # sampling1 = Sampling(
     #     dist_name=distribution, values=(demand1_values[t], demand1_weights[t])
     # )
@@ -657,6 +670,9 @@ while iter_ < iter_num:
                     slope2_values[t - 1][n][s] = pi[2]
                     slope3_1values[t - 1][n][s] = pi[3]
                     slope3_2values[t - 1][n][s] = pi[4]
+                # if iter_ == 0 and t == 1 and n == 0 and s == 0:
+                #     pass
+
 
             avg_intercept = sum(intercept_values[t - 1][n]) / S
             avg_slope1_1 = sum(slope1_1values[t - 1][n]) / S
@@ -682,7 +698,7 @@ print("********************************************")
 final_value = -models[0].objVal
 Q1 = q1_values[iter_ - 1][0][0]
 Q2 = q2_values[iter_ - 1][0][0]
-print("after %d iteration, sample numer %d, scenario %d: " % (iter_, sample_num, scenario_num))
+print("after %d iterations, sample number %d, scenario %d: " % (iter_, sample_num, scenario_num))
 print("final expected cash balance is %.2f" % final_value)
 print("ordering Q1 in the first period is %.2f" % Q1)
 print("ordering Q2 in the first period is %.2f" % Q2)

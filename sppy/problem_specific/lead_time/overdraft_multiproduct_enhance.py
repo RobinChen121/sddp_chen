@@ -5,6 +5,70 @@ Date: 2025/3/22 12:02
 Description: 
     Setting lb or ub for some values in advance actually slows down the computation.
 
+
+meand demand is 30 for product 1:
+3 periods Poisson:
+after 80 iterations, sample number 20, scenario 10:
+final expected cash balance is 86.08
+ordering Q1 in the first period is 37.53
+ordering Q2 in the first period is 21.79
+cpu time is 149.431 s
+
+after 80 iterations, sample number 10, scenario 20:
+final expected cash balance is 80.16
+ordering Q1 in the first period is 40.45
+ordering Q2 in the first period is 20.25
+cpu time is 73.216 s
+
+meand demand is 15 for product 1: optimal solution is 39.62
+after 80 iterations, sample number 10, scenario 20:
+final expected cash balance is 33.47
+ordering Q1 in the first period is 22.93
+ordering Q2 in the first period is 12.53
+cpu time is 71.411 s;
+after 80 iterations, sample number 30, scenario 10:
+final expected cash balance is 39.22
+ordering Q1 in the first period is 21.33
+ordering Q2 in the first period is 12.00
+cpu time is 247.517 s;
+after 80 iterations, sample number 10, scenario 10:
+final expected cash balance is 39.29
+ordering Q1 in the first period is 22.00
+ordering Q2 in the first period is 12.00
+cpu time is 23.659 s
+
+4 periods Poisson: meand demand is 30 for product 1
+after 50 iterations, sample number 10, scenario 20:
+final expected cash balance is 214.25
+ordering Q1 in the first period is 39.84
+ordering Q2 in the first period is 22.11
+cpu time is 54.276 s
+
+after 80 iterations, sample number 10, scenario 20:
+final expected cash balance is 220.09
+ordering Q1 in the first period is 42.00
+ordering Q2 in the first period is 20.00
+cpu time is 112.678 s
+
+after 80 iterations, sample number 20, scenario 10:
+final expected cash balance is 206.97
+ordering Q1 in the first period is 39.27
+ordering Q2 in the first period is 21.52
+cpu time is 249.876 s
+
+5 periods Poisson:
+after 50 iterations, sample number 10, scenario 20:
+final expected cash balance is 344.81
+ordering Q1 in the first period is 47.40
+ordering Q2 in the first period is 25.50
+cpu time is 88.993 s
+
+6 periods Poisson:
+after 80 iterations, sample number 10, scenario 10:
+final expected cash balance is 479.95
+ordering Q1 in the first period is 40.18
+ordering Q2 in the first period is 22.07
+cpu time is 118.677 s
 """
 
 import itertools
@@ -19,7 +83,7 @@ def remove_duplicate_rows(matrix):
     return list(map(list, set(map(tuple, matrix))))  # 先转换成元组去重，再转换回列表
 
 
-mean_demands1 = [30, 30, 30]  # higher average demand vs lower average demand
+mean_demands1 = [30, 30, 30, 30, 30, 30]  # higher average demand vs lower average demand
 mean_demands2 = [i * 0.5 for i in mean_demands1]
 T = len(mean_demands1)
 
@@ -50,26 +114,13 @@ U = 500  # overdraft limit
 
 sample_num = 10  # change 1
 scenario_num = 10  # sampled number of scenarios for forward computing # change 2
-iter_num = 30
+iter_num = 80
 
 sample_nums1 = [sample_num for t in range(T)]
 sample_nums2 = [sample_num for t in range(T)]
 # detailed samples in each period
 sample_details1 = [[0.0 for _ in range(sample_nums1[t])] for t in range(T)]
 sample_details2 = [[0.0 for _ in range(sample_nums2[t])] for t in range(T)]
-for t in range(T):
-    sampling1 = Sampling(dist_name=distribution, mu=mean_demands1[t])
-    sampling2 = Sampling(dist_name=distribution, mu=mean_demands2[t])
-
-    # sampling1 = Sampling(
-    #     dist_name=distribution, values=(demand1_values[t], demand1_weights[t])
-    # )
-    # sampling2 = Sampling(
-    #     dist_name=distribution, values=(demand2_values[t], demand2_weights[t])
-    # )
-
-    sample_details1[t] = sampling1.generate_samples(sample_nums1[t])
-    sample_details2[t] = sampling2.generate_samples(sample_nums2[t])
 
 # sample_details1 = [[10, 30], [10, 30], [10, 30]]  # change 3
 # sample_details2 = [[5, 15], [5, 15], [5, 15]]
@@ -113,12 +164,13 @@ for t in range(T + 1):
             name="theta_" + str(t + 2),
         )
     if t > 0:
-        q1_pre[t - 1] = models[t].addVar(
-            vtype=GRB.CONTINUOUS, name="q1_pre_" + str(t + 1)
-        )
-        q2_pre[t - 1] = models[t].addVar(
-            vtype=GRB.CONTINUOUS, name="q2_pre_" + str(t + 1)
-        )
+        if t < T:
+            q1_pre[t - 1] = models[t].addVar(
+                vtype=GRB.CONTINUOUS, name="q1_pre_" + str(t + 1)
+            )
+            q2_pre[t - 1] = models[t].addVar(
+                vtype=GRB.CONTINUOUS, name="q2_pre_" + str(t + 1)
+            )
         I1[t - 1] = models[t].addVar(vtype=GRB.CONTINUOUS, name="I1_" + str(t))
         I2[t - 1] = models[t].addVar(vtype=GRB.CONTINUOUS, name="I2_" + str(t))
         cash[t - 1] = models[t].addVar(
@@ -253,11 +305,26 @@ W2_forward_values = [
     [[0 for n in range(scenario_num)] for t in range(T)] for _ in range(iter_num)
 ]
 
+for t in range(T):
+    sampling1 = Sampling(dist_name=distribution, mu=mean_demands1[t])
+    sampling2 = Sampling(dist_name=distribution, mu=mean_demands2[t])
+
+    # sampling1 = Sampling(
+    #     dist_name=distribution, values=(demand1_values[t], demand1_weights[t])
+    # )
+    # sampling2 = Sampling(
+    #     dist_name=distribution, values=(demand2_values[t], demand2_weights[t])
+    # )
+
+    sample_details1[t] = sampling1.generate_samples(sample_nums1[t])
+    sample_details2[t] = sampling2.generate_samples(sample_nums2[t])
+
 objs = [0 for _ in range(iter_num)]
 cut_coefficients_cache = [set() for t in range(T)]
 cpu_time = 0
 start = time.process_time()
 while iter_ < iter_num:
+
     scenario_paths1 = generate_scenario_paths(scenario_num, sample_nums1)
     scenario_paths2 = generate_scenario_paths(scenario_num, sample_nums2)
 
@@ -293,8 +360,8 @@ while iter_ < iter_num:
             intercepts[iter_ - 1][0][0],
         )
         if (
-            not cut_coefficients_cache[0]
-            or this_coefficient not in cut_coefficients_cache[0]
+                not cut_coefficients_cache[0]  # means the array is empty
+                or this_coefficient not in cut_coefficients_cache[0]
         ):
             models[0].addConstr(
                 theta[0]
@@ -318,7 +385,7 @@ while iter_ < iter_num:
         cut_coefficients_cache[0].add(this_coefficient)
 
     models[0].optimize()
-    # if iter_ >= 1:
+    # if iter_ >= 0:
     #     models[0].write("iter" + str(iter_) + "_main.lp")
     #     models[0].write("iter" + str(iter_) + "_main.sol")
     #     pass
@@ -355,8 +422,8 @@ while iter_ < iter_num:
             for final_coefficient in final_coefficients:
                 final_coefficient = tuple(final_coefficient)
                 if (
-                    not cut_coefficients_cache[t]
-                    or final_coefficient not in cut_coefficients_cache[t]
+                        not cut_coefficients_cache[t]  # means the array is empty
+                        or final_coefficient not in cut_coefficients_cache[t]
                 ):
                     models[t].addConstr(
                         theta[t]
@@ -394,14 +461,14 @@ while iter_ < iter_num:
                 rhs1_2 = ini_I2 - demand2
             else:
                 rhs1_1 = (
-                    I1_forward_values[iter_][t - 2][n]
-                    + q1_pre_values[iter_][t - 2][n]
-                    - demand1
+                        I1_forward_values[iter_][t - 2][n]
+                        + q1_pre_values[iter_][t - 2][n]
+                        - demand1
                 )
                 rhs1_2 = (
-                    I2_forward_values[iter_][t - 2][n]
-                    + q2_pre_values[iter_][t - 2][n]
-                    - demand2
+                        I2_forward_values[iter_][t - 2][n]
+                        + q2_pre_values[iter_][t - 2][n]
+                        - demand2
                 )
             if t < T:
                 rhs2 = (
@@ -426,11 +493,11 @@ while iter_ < iter_num:
                     # - r2 * W2_forward_values[iter_][t - 1][n]
                     # + prices1[t - 1] * demand1
                     # + prices2[t - 1] * demand2
-                    +prices1[t - 1] * demand1
-                    + prices2[t - 1] * demand2
-                    + (1 + r0) * W0_forward_values[iter_][t - 1][n]
-                    - (1 + r1) * W1_forward_values[iter_][t - 1][n]
-                    - (1 + r2) * W2_forward_values[iter_][t - 1][n]
+                        +prices1[t - 1] * demand1
+                        + prices2[t - 1] * demand2
+                        + (1 + r0) * W0_forward_values[iter_][t - 1][n]
+                        - (1 + r1) * W1_forward_values[iter_][t - 1][n]
+                        - (1 + r2) * W2_forward_values[iter_][t - 1][n]
                 )
                 rhs3_1 = q1_values[iter_][t - 1][n]
                 rhs3_2 = q2_values[iter_][t - 1][n]
@@ -455,7 +522,7 @@ while iter_ < iter_num:
                     + theta[t],
                     GRB.MINIMIZE,
                 )
-            # noinspection PyTypeChecker
+            # noinspection PyTypeChecke
             models[t].setAttr("RHS", models[t].getConstrs()[0], rhs1_1)
             models[t].setAttr("RHS", models[t].getConstrs()[1], rhs1_2)
             if t < T:
@@ -483,9 +550,9 @@ while iter_ < iter_num:
 
             # optimize
             models[t].optimize()
-            # if iter_ == 0 and t == 1:
-            #     models[t].write('iter' + str(iter_) + '_sub_' + str(t) + '^' + str(n+1) + '.lp')
-            #     models[t].write('iter' + str(iter_) + '_sub_' + str(t) + '^' + str(n+1) + '.sol')
+            # if iter_ == 0 and t == 1 and n == 0:
+            #     models[t].write('iter' + str(iter_) + '_sub_' + str(t) + '^' + str(n + 1) + '.lp')
+            #     models[t].write('iter' + str(iter_) + '_sub_' + str(t) + '^' + str(n + 1) + '.sol')
             #     pass
 
             I1_forward_values[iter_][t - 1][n] = I1[t - 1].x
@@ -546,14 +613,14 @@ while iter_ < iter_num:
                     rhs1_2 = ini_I2 - demand2
                 else:
                     rhs1_1 = (
-                        I1_forward_values[iter_][t - 2][n]
-                        + q1_pre_values[iter_][t - 2][n]
-                        - demand1
+                            I1_forward_values[iter_][t - 2][n]
+                            + q1_pre_values[iter_][t - 2][n]
+                            - demand1
                     )
                     rhs1_2 = (
-                        I2_forward_values[iter_][t - 2][n]
-                        + q2_pre_values[iter_][t - 2][n]
-                        - demand2
+                            I2_forward_values[iter_][t - 2][n]
+                            + q2_pre_values[iter_][t - 2][n]
+                            - demand2
                     )
                 if t < T:  # test for T
                     rhs2 = (
@@ -576,12 +643,14 @@ while iter_ < iter_num:
                         # - r2 * W2_forward_values[iter_][t - 1][n]
                         # + prices1[t - 1] * demand1
                         # + prices2[t - 1] * demand2
-                        prices1[t - 1] * demand1
-                        + prices2[t - 1] * demand2
-                        + (1 + r0) * W0_forward_values[iter_][t - 1][n]
-                        - (1 + r1) * W1_forward_values[iter_][t - 1][n]
-                        - (1 + r2) * W2_forward_values[iter_][t - 1][n]
+                            prices1[t - 1] * demand1
+                            + prices2[t - 1] * demand2
+                            + (1 + r0) * W0_forward_values[iter_][t - 1][n]
+                            - (1 + r1) * W1_forward_values[iter_][t - 1][n]
+                            - (1 + r2) * W2_forward_values[iter_][t - 1][n]
                     )
+                    if iter_ == 0 and t == 3 and n == 0 and s == 0:
+                        pass
                 if t < T:
                     rhs3_1 = q1_values[iter_][t - 1][n]
                     rhs3_2 = q2_values[iter_][t - 1][n]
@@ -632,7 +701,41 @@ while iter_ < iter_num:
                 models[t].optimize()
                 pi = models[t].getAttr(GRB.Attr.Pi)
                 rhs = models[t].getAttr(GRB.Attr.RHS)
-                # if iter_ == 2 and t == 1 and n == 0 and s == 0:
+
+                num_con = len(pi)
+                if t < T:
+                    intercept_values[t - 1][n][s] += (
+                            -pi[0] * demand1
+                            - pi[1] * demand2
+                            + overhead_costs[t]
+                            - prices1[t - 1] * demand1
+                            - prices2[t - 1] * demand2
+                            + pi[2]
+                            * (
+                                    prices1[t - 1] * demand1 + prices2[t - 1] * demand2
+                            )  # previously not include the following 1 lines
+                        # - pi[2] * overhead_costs[t - 1]
+                    )
+                else:
+                    intercept_values[t - 1][n][s] += (
+                            -pi[0] * demand1
+                            - pi[1] * demand2
+                            - prices1[t - 1] * demand1
+                            - prices2[t - 1] * demand2
+                        # + pi[2] * prices1[t - 1] * demand1  # following 3 lines
+                        # + pi[2] * prices2[t - 1] * demand2
+                        # - pi[2] * overhead_costs[t - 1]
+                    )
+
+                for sk in range(5, num_con):  # previously inside the above loop
+                    intercept_values[t - 1][n][s] += pi[sk] * rhs[sk]
+                slope1_1values[t - 1][n][s] = pi[0]
+                slope1_2values[t - 1][n][s] = pi[1]
+                if t < T:
+                    slope2_values[t - 1][n][s] = pi[2]
+                    slope3_1values[t - 1][n][s] = pi[3]
+                    slope3_2values[t - 1][n][s] = pi[4]
+                # if iter_ == 0 and t == 3 and n == 0 and s == 0:
                 #     models[t].write(
                 #         "iter"
                 #         + str(iter_)
@@ -657,40 +760,6 @@ while iter_ < iter_num:
                 #     )
                 #     pass
 
-                num_con = len(pi)
-                if t < T:
-                    intercept_values[t - 1][n][s] += (
-                        -pi[0] * demand1
-                        - pi[1] * demand2
-                        + overhead_costs[t]
-                        - prices1[t - 1] * demand1
-                        - prices2[t - 1] * demand2
-                        + pi[2]
-                        * (
-                            prices1[t - 1] * demand1 + prices2[t - 1] * demand2
-                        )  # previously not include the following 1 lines
-                        # - pi[2] * overhead_costs[t - 1]
-                    )
-                else:
-                    intercept_values[t - 1][n][s] += (
-                        -pi[0] * demand1
-                        - pi[1] * demand2
-                        - prices1[t - 1] * demand1
-                        - prices2[t - 1] * demand2
-                        # + pi[2] * prices1[t - 1] * demand1  # following 3 lines
-                        # + pi[2] * prices2[t - 1] * demand2
-                        # - pi[2] * overhead_costs[t - 1]
-                    )
-
-                for sk in range(5, num_con):  # previously inside the above loop
-                    intercept_values[t - 1][n][s] += pi[sk] * rhs[sk]
-                slope1_1values[t - 1][n][s] = pi[0]
-                slope1_2values[t - 1][n][s] = pi[1]
-                if t < T:
-                    slope2_values[t - 1][n][s] = pi[2]
-                    slope3_1values[t - 1][n][s] = pi[3]
-                    slope3_2values[t - 1][n][s] = pi[4]
-
             avg_intercept = sum(intercept_values[t - 1][n]) / S
             avg_slope1_1 = sum(slope1_1values[t - 1][n]) / S
             avg_slope1_2 = sum(slope1_2values[t - 1][n]) / S
@@ -704,6 +773,8 @@ while iter_ < iter_num:
             slopes3_1[iter_][t - 1][n] = avg_slope3_1
             slopes3_2[iter_][t - 1][n] = avg_slope3_2
             intercepts[iter_][t - 1][n] = avg_intercept
+        if iter_ == 2 and t == 1:
+            pass
 
     objs[iter_] = -models[0].objVal
     print(f"iteration {iter_}, obj is {objs[iter_]:.2f}")
@@ -716,7 +787,7 @@ final_value = -models[0].objVal
 Q1 = q1_values[iter_ - 1][0][0]
 Q2 = q2_values[iter_ - 1][0][0]
 print(
-    "after %d iteration, sample numer %d, scenario %d: "
+    "after %d iterations, sample number %d, scenario %d: "
     % (iter_, sample_num, scenario_num)
 )
 print("final expected cash balance is %.2f" % final_value)

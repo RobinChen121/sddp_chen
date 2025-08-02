@@ -3,7 +3,19 @@ Python version: 3.12.7
 Author: Zhen Chen, chen.zhen5526@gmail.com
 Date: 2025/4/3 14:36
 Description: 
-    
+
+4 periods Poisson:
+after 50 iterations, sample number 10, scenario 20:
+final expected cash balance is 218.46
+ordering Q1 in the first period is 40.96
+ordering Q2 in the first period is 24.26
+cpu time is 23.496 s
+
+after 50 iterations, sample number 10, scenario 20:
+final expected cash balance is 367.80
+ordering Q1 in the first period is 35.41
+ordering Q2 in the first period is 23.30
+cpu time is 31.665 s
 
 """
 
@@ -31,7 +43,7 @@ def remove_duplicate_rows(matrix):
     return list(map(list, set(map(tuple, matrix))))  # 先转换成元组去重，再转换回列表
 
 
-mean_demands1 = [30, 30, 30]  # higher average demand vs lower average demand
+mean_demands1 = [30, 30, 30, 30, 30]  # higher average demand vs lower average demand
 mean_demands2 = [i * 0.5 for i in mean_demands1]
 T = len(mean_demands1)
 
@@ -61,8 +73,8 @@ r2 = 2  # penalty interest rate for overdraft exceeding the limit does not affec
 U = 500  # overdraft limit
 
 sample_num = 10  # change 1
-scenario_num = 10  # sampled number of scenarios for forward computing # change 2
-iter_num = 30
+scenario_num = 20  # sampled number of scenarios for forward computing # change 2
+iter_num = 50
 
 sample_nums1 = [sample_num for t in range(T)]
 sample_nums2 = [sample_num for t in range(T)]
@@ -125,12 +137,13 @@ for t in range(T + 1):
             name="theta_" + str(t + 2),
         )
     if t > 0:
-        q1_pre[t - 1] = models[t].addVar(
-            vtype=GRB.CONTINUOUS, name="q1_pre_" + str(t + 1)
-        )
-        q2_pre[t - 1] = models[t].addVar(
-            vtype=GRB.CONTINUOUS, name="q2_pre_" + str(t + 1)
-        )
+        if t < T:
+            q1_pre[t - 1] = models[t].addVar(
+                vtype=GRB.CONTINUOUS, name="q1_pre_" + str(t + 1)
+            )
+            q2_pre[t - 1] = models[t].addVar(
+                vtype=GRB.CONTINUOUS, name="q2_pre_" + str(t + 1)
+            )
         I1[t - 1] = models[t].addVar(vtype=GRB.CONTINUOUS, name="I1_" + str(t))
         I2[t - 1] = models[t].addVar(vtype=GRB.CONTINUOUS, name="I2_" + str(t))
         cash[t - 1] = models[t].addVar(
@@ -547,10 +560,13 @@ while iter_ < iter_num:
         for t in range(T)
     ]
 
+    result_status = [[{} for n in range(scenario_num)] for t in range(T - 1)]
+    result_status_last_stage = [{} for n in range(scenario_num)]
     for t in range(T, 0, -1):
         for n in range(scenario_num):
             S = len(demands_all[t - 1])
             for s in range(S):
+                skip = False
                 demand1 = demands_all[t - 1][s][0]
                 demand2 = demands_all[t - 1][s][1]
                 if t == 1:
@@ -618,13 +634,40 @@ while iter_ < iter_num:
                         + theta[t],
                         GRB.MINIMIZE,
                     )
-                # noinspection PyTypeChecker
-                models[t].setAttr("RHS", models[t].getConstrs()[0], rhs1_1)
-                models[t].setAttr("RHS", models[t].getConstrs()[1], rhs1_2)
-                if t < T:  # test for T
-                    models[t].setAttr("RHS", models[t].getConstrs()[2], rhs2)
-                    models[t].setAttr("RHS", models[t].getConstrs()[3], rhs3_1)
-                    models[t].setAttr("RHS", models[t].getConstrs()[4], rhs3_2)
+                I1_status = IStatus.POSITIVE if rhs1_1 > 0 else IStatus.NEGATIVE
+                I2_status = IStatus.POSITIVE if rhs1_2 > 0 else IStatus.NEGATIVE
+                this_W = rhs2 + prices1[t - 1] * rhs1_1 + prices2[t - 1] * rhs1_2
+                if s > 0:
+                    if t < T:
+                        this_W -= overhead_costs[t] + last_q1 * unit_vari_costs1[t]
+                        if this_W > 0:
+                            W_status = WStatus.ATW0
+                        elif this_W < -U:
+                            W_status = WStatus.ATW2
+                        else:
+                            W_status = WStatus.ATW1
+                    if t < T:
+                        if (I1_status, I2_status, W_status) in result_status[t - 1][n]:
+                            skip = True  # a heuristic
+                            pi, rhs = result_status[t - 1][n][(I1_status, I2_status, W_status)]
+                            rhs[0] = rhs1_1
+                            rhs[1] = rhs1_2
+                            rhs[2] = rhs2
+                    else:
+                        if (I1_status, I2_status) in result_status_last_stage[n]:
+                            skip = True
+                            pi, rhs = result_status_last_stage[n][(I1_status, I2_status)]
+                            rhs[0] = rhs1_1
+                            rhs[1] = rhs1_2
+                if not skip:
+                    # noinspection PyTypeChecker
+                    models[t].setAttr("RHS", models[t].getConstrs()[0], rhs1_1)
+                    models[t].setAttr("RHS", models[t].getConstrs()[1], rhs1_2)
+
+                    if t < T:  # test for T
+                        models[t].setAttr("RHS", models[t].getConstrs()[2], rhs2)
+                        models[t].setAttr("RHS", models[t].getConstrs()[3], rhs3_1)
+                        models[t].setAttr("RHS", models[t].getConstrs()[4], rhs3_2)
 
                 # de set the lb and ub for some variables
                 # since backward is for generating dual values
@@ -640,10 +683,26 @@ while iter_ < iter_num:
                 #     cash[t - 1].setAttr(GRB.Attr.LB, -GRB.INFINITY)
                 #     cash[t - 1].setAttr(GRB.Attr.UB, GRB.INFINITY)
 
-                # optimize
-                models[t].optimize()
-                pi = models[t].getAttr(GRB.Attr.Pi)
-                rhs = models[t].getAttr(GRB.Attr.RHS)
+                    # optimize
+                    models[t].optimize()
+                    if t < T:
+                        last_q1 = q1[t].x
+                        last_q2 = q2[t].x
+                    pi = models[t].getAttr(GRB.Attr.Pi)
+                    rhs = models[t].getAttr(GRB.Attr.RHS)
+                    if t < T:
+                        this_W -= overhead_costs[t] + last_q1 * unit_vari_costs1[t] + last_q2 * unit_vari_costs2[t]
+                        if this_W > 0:
+                            W_status = WStatus.ATW0
+                        elif this_W < -U:
+                            W_status = WStatus.ATW2
+                        else:
+                            W_status = WStatus.ATW1
+                    if t < T:
+                        result_status[t - 1][n][(I1_status, I2_status, W_status)] = (pi, rhs)
+                        pass
+                    else:
+                        result_status_last_stage[n][I1_status, I2_status] = (pi, rhs)
                 # if iter_ == 2 and t == 1 and n == 0 and s == 0:
                 #     models[t].write(
                 #         "iter"
@@ -728,7 +787,7 @@ final_value = -models[0].objVal
 Q1 = q1_values[iter_ - 1][0][0]
 Q2 = q2_values[iter_ - 1][0][0]
 print(
-    "after %d iteration, sample numer %d, scenario %d: "
+    "after %d iterations, sample number %d, scenario %d: "
     % (iter_, sample_num, scenario_num)
 )
 print("final expected cash balance is %.2f" % final_value)
