@@ -13,7 +13,7 @@ df = pd.read_csv(
 )
 
 df_price = df.groupby(['price']).mean().reset_index()
-df_price = df_price[['price', 'time', 'abs value', 'sddp time', 'sddp value', 'abs gap', 'sddp enhance time', 'sddp enhance value' , 'abs gap enhance', 'sddp further time3', 'abs value further3', 'abs gap further3']]
+df_price = df_price[['price', 'time', 'abs value', 'sddp time', 'abs value sddp', 'abs gap', 'sddp enhance time', 'abs value enhance' , 'abs gap enhance', 'sddp further time3', 'abs value further3', 'abs gap further3']]
 df_price = df_price.applymap(lambda x: round(x, 2) if isinstance(x, (int, float)) else x)
 
 df_overhead= df.groupby(['overhead']).mean().reset_index()
