@@ -570,3 +570,26 @@ unit_back_costs: [10, 10, 10, 10, 10, 10, 10, 10]
 unit_hold_costs: [2, 2, 2, 2, 2, 2, 2, 2]
 
 
+2025-11-13 20:40:12,572 - computer: 13th Gen Intel(R) Core(TM) i5-1335U, cpu: 12memory: 15.38 GB, system: win32
+description: This module build gurobi model for each uncertainty realization.
+____________________
+results:
+cpu_time: 181.44
+objective value: 110.20
+Q_0: 13.00
+____________________
+sddp parameters:
+sample numbers: [10, 10, 10, 10]
+scenario_forward_num: 30
+iter_num: 25
+____________________
+problem parameters:
+ini_I: 0
+T: 4
+distribution: poisson
+mean_demands: [10, 20, 10, 20]
+unit_vari_costs: [1, 1, 1, 1]
+unit_back_costs: [10, 10, 10, 10]
+unit_hold_costs: [2, 2, 2, 2]
+
+

@@ -45,7 +45,7 @@ import multiprocessing
 from sppy.utils.logger import Logger
 
 # problem settings
-mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
+mean_demands = [10, 20, 10, 20]
 distribution = "poisson"
 T = len(mean_demands)
 # T = 2  # change 1

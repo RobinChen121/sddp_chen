@@ -31,7 +31,7 @@ from sppy.utils.sampling import Sampling, generate_scenario_paths
 from sppy.utils.logger import Logger
 
 # problem settings
-mean_demands = [10, 20, 10, 20, 10, 20, 10, 20]
+mean_demands = [10, 20, 10, 20]
 distribution = "poisson"
 T = len(mean_demands)
 # T = 2 # change 1

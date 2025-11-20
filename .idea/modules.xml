@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../Python-Practices/.idea/Python-Practices.iml" filepath="$PROJECT_DIR$/../Python-Practices/.idea/Python-Practices.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../python-practices/.idea/Python-Practices.iml" filepath="$PROJECT_DIR$/../python-practices/.idea/Python-Practices.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../qr_forcaster/.idea/qr_forcaster.iml" filepath="$PROJECT_DIR$/../qr_forcaster/.idea/qr_forcaster.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/sddp_chen.iml" filepath="$PROJECT_DIR$/.idea/sddp_chen.iml" />
     </modules>
   </component>
